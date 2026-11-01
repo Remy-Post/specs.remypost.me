@@ -2,6 +2,10 @@
 # Build, then import the ingest credential (from the Keychain) and the specs workflow into n8n, and publish it.
 # Same procedure as the AA deploy.sh: n8n is stopped while the CLI writes, then restarted (about 20-25 s).
 #   ./deploy.sh              check, import credential + workflow, publish
+#   STAGE=1 ./deploy.sh      write the new version into n8n's database WITHOUT stopping or restarting n8n; the running
+#                            instance keeps the old version until n8n next restarts, then loads this one (the n8n CLI
+#                            supports this: it says "restart n8n for changes to take effect"). Use it when a restart
+#                            would interrupt other work.
 #   FORCE=1 ./deploy.sh      deploy even while an execution is running (a restart kills it) — never
 #                            pass this without checking first; the script refuses on purpose
 # The token comes from the Keychain item "specs-remypost-ingest" and only ever travels through a pipe and a
@@ -50,10 +54,15 @@ step n8n import:workflow --input=specsShip0000001.json
 step n8n publish:workflow --id=specsShip0000001
 RUN
 
-launchctl bootout gui/$(id -u)/$WATCHDOG 2>/dev/null || true
-hub_stop
-STOPPED=1
-sleep 2
+if [[ -n $STAGE ]]; then
+  [[ $HUB_RUNTIME == docker ]] || { echo "STAGE=1 needs the Docker runtime (SQLite in a named volume)"; exit 1; }
+  echo "Staging only: n8n keeps running and picks this up at its next restart."
+else
+  launchctl bootout gui/$(id -u)/$WATCHDOG 2>/dev/null || true
+  hub_stop
+  STOPPED=1
+  sleep 2
+fi
 if [[ $HUB_RUNTIME == docker ]]; then
   tar -C $IO -cf - . | hub_dc run --rm --no-deps -T --entrypoint sh n8n -c 'mkdir -p /tmp/in && tar -xf - -C /tmp/in && cd /tmp/in && sh run.sh'
 else
@@ -61,6 +70,12 @@ else
     n8n() { /usr/local/bin/node "$HOME/.n8n-server/app/node_modules/n8n/bin/n8n" "$@"; }; cd $IO; source ./run.sh )
 fi
 rm -rf $IO
+
+if [[ -n $STAGE ]]; then
+  $SQL "select id, activeVersionId is not null as published, name from workflow_entity where id='$WF';"
+  echo "Staged. n8n loads it at its next restart (bin/n8nctl restart, a reboot, or any deploy.sh run)."
+  exit 0
+fi
 
 hub_start
 STOPPED=

@@ -29,8 +29,8 @@ WF_NAME = "Specs · ship Mac numbers"
 
 # The agent listens on the Mac's 127.0.0.1; Colima containers see that as host.lima.internal.
 AGENT_URL = "http://host.lima.internal:4319/v1/snapshot"
-# Switch to https://specs.remypost.me/api/v1/ingest once the Namecheap A record exists (docs/operations.md).
-INGEST_URL = "https://specs.remy-post.duckdns.org/api/v1/ingest"
+# specs.remy-post.duckdns.org serves the same container and stays as a fallback.
+INGEST_URL = "https://specs.remypost.me/api/v1/ingest"
 
 # Header Auth credential, created by deploy.sh from the Keychain item specs-remypost-ingest. Ids are 1-16 chars.
 INGEST_CRED_ID = "specsIngest00001"

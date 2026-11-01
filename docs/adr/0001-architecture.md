@@ -76,5 +76,5 @@ n8n (Colima)  Schedule Trigger 1.4                          page /  (server-rend
 
 - When the Mac sleeps the page shows the last reading with its age; no fake data.
 - The n8n workflow is the only writer. Rotating the token = new Keychain value, VM `.env`, n8n credential.
-- specs.remypost.me needs one DNS record at Namecheap: `A specs → 40.233.100.237`. Until then the same app is at
-  https://specs.remy-post.duckdns.org (same Caddy block).
+- specs.remypost.me is one Namecheap record, `A specs → 40.233.100.237` (added 2026-11-01). The same app also
+  answers at https://specs.remy-post.duckdns.org (same Caddy block), a fallback that does not depend on Namecheap.

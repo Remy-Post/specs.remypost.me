@@ -82,7 +82,7 @@
    ],
    "parameters": {
     "method": "POST",
-    "url": "https://specs.remy-post.duckdns.org/api/v1/ingest",
+    "url": "https://specs.remypost.me/api/v1/ingest",
     "authentication": "genericCredentialType",
     "genericAuthType": "httpHeaderAuth",
     "sendBody": true,

@@ -40,8 +40,7 @@ VM:   Caddy  ->  container "specs" (Next.js + SQLite volume)           ->  https
    `restrict,command="/home/ubuntu/bin/publish-specs" ssh-ed25519 AAAA... github-actions-specs`.
    Then set the repository secrets `DEPLOY_KEY` (private half), `DEPLOY_HOST` (`ubuntu@40.233.100.237`) and
    `DEPLOY_KNOWN_HOSTS` (`ssh-keyscan -t ed25519 40.233.100.237`).
-4. **DNS** (see [DNS record](#dns-record)). Until it exists the same app answers at
-   `https://specs.remy-post.duckdns.org`.
+4. **DNS** (see [DNS record](#dns-record)); the fallback name `https://specs.remy-post.duckdns.org` works without it.
 5. **First deploy:** push to `main`, or `gh workflow run deploy.yml`.
 6. **Agent** and **n8n workflow:** next two sections.
 
@@ -79,6 +78,8 @@ publishes it, restarts n8n and prints the workflow and credential rows. The toke
 `0700` directory that is removed when the script exits, even on failure; if a step fails, n8n is started again.
 
 - Change the workflow in `n8n/build.py`, run `python3 n8n/build.py`, commit the regenerated JSON (CI fails on a stale file).
+- `STAGE=1 n8n/deploy.sh` writes the change without restarting n8n; it takes effect at n8n's next restart. Use it when
+  a restart would interrupt something else.
 - Only failed runs are stored. A healthy workflow shows no executions; look at the Executions list for failures.
 - If the agent or the site is down, each 5-minute run fails quietly (no error workflow, so no emails); the page shows
   how old its last reading is. To pause, open the workflow in the n8n editor and choose Unpublish; run `n8n/deploy.sh`
@@ -144,7 +145,7 @@ n8n/deploy.sh
 Check without storing anything (an empty body must answer 400; 401 means the token is wrong):
 
 ```bash
-curl -s -o /dev/null -w '%{http_code}\n' -X POST https://specs.remy-post.duckdns.org/api/v1/ingest \
+curl -s -o /dev/null -w '%{http_code}\n' -X POST https://specs.remypost.me/api/v1/ingest \
   -H @<(printf 'Authorization: Bearer %s' "$(security find-generic-password -s specs-remypost-ingest -w)") \
   -H 'Content-Type: application/json' -d '{}'
 ```
@@ -171,8 +172,8 @@ The next push to `main` deploys `main` again: revert the bad commit to keep the 
 
 ```bash
 tail -f ~/Library/Logs/specs-agent.log                                  # Mac agent
-curl -s https://specs.remy-post.duckdns.org/api/health                  # site is up
-curl -s https://specs.remy-post.duckdns.org/api/v1/latest | head -c 400 # newest reading and its receivedAt
+curl -s https://specs.remypost.me/api/health                            # site is up
+curl -s https://specs.remypost.me/api/v1/latest | head -c 400           # newest reading and its receivedAt
 ssh n8n 'docker logs -f --tail 100 specs'                               # app
 ssh n8n 'docker inspect -f "{{.State.Health.Status}}" specs'            # health
 ssh n8n 'cd ~/n8n && docker compose logs --tail 50 caddy'               # certificates, 5xx
@@ -183,19 +184,15 @@ the lid is closed: n8n sleeps with the Mac.
 
 ## DNS record
 
-At Namecheap, Advanced DNS for `remypost.me`, add one record:
+Added at Namecheap on 2026-11-01 (Advanced DNS for `remypost.me`):
 
 | Type | Host | Value | TTL |
 |---|---|---|---|
 | A Record | `specs` | `40.233.100.237` | Automatic |
 
-Check with `dig +short specs.remypost.me`. Caddy requests the certificate by itself on the first request once the
-name resolves (ports 80 and 443 are already open). Before that, Caddy logs failed certificate attempts for this one
-name; the other sites are not affected.
-
-Then switch the workflow to the real domain: set `INGEST_URL` in `n8n/build.py` to
-`https://specs.remypost.me/api/v1/ingest`, run `python3 n8n/build.py`, commit, run `n8n/deploy.sh`. The duckdns name
-keeps working as a fallback.
+Check with `dig +short specs.remypost.me @1.1.1.1`. Caddy requests the certificate by itself once the name resolves.
+If it tried before the record existed it backs off for a while; `caddy reload --force` inside the Caddy container
+makes it try again at once. `https://specs.remy-post.duckdns.org` serves the same container and stays as a fallback.
 
 ## Uninstall
 

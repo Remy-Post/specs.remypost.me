@@ -187,7 +187,7 @@ Schedule Trigger 1.4 `{"rule":{"interval":[{"field":"minutes","minutesInterval":
 HTTP Request 4.5 "Read Mac agent" GET `http://host.lima.internal:4319/v1/snapshot`, timeout 10000, retryOnFail
 true maxTries 2 →
 HTTP Request 4.5 "Ship to specs.remypost.me" POST `INGEST_URL` (constant in build.py, default
-`https://specs.remy-post.duckdns.org/api/v1/ingest` until the Namecheap record exists), authentication
+`https://specs.remypost.me/api/v1/ingest`), authentication
 genericCredentialType + genericAuthType httpHeaderAuth, credential `{"httpHeaderAuth":{"id":"specsIngest00001","name":"specs.remypost.me ingest"}}`,
 sendBody json with the previous node's JSON as body, timeout 15000, retryOnFail true maxTries 3 waitBetweenTries 5000.
 Workflow settings: executionOrder v1, timezone America/Toronto, saveDataSuccessExecution "none" (avoid 288 rows/day),
