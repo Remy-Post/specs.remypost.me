@@ -1,0 +1,42 @@
+# Runs on the Oracle VM beside the existing n8n stack; deploy/publish-specs builds and starts it.
+name: specs
+
+services:
+  web:
+    build: .
+    image: specs:latest
+    container_name: specs
+    restart: unless-stopped
+    # INGEST_TOKEN lives here, outside the repo. Override the path with SPECS_ENV_FILE for local runs.
+    env_file: ${SPECS_ENV_FILE:-/home/ubuntu/specs/.env}
+    # Loopback only, for smoke tests on the VM. Public traffic arrives through Caddy at specs:3000.
+    ports:
+      - "127.0.0.1:3020:3000"
+    networks:
+      - caddy
+    volumes:
+      - specs_data:/data
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,noexec,nosuid
+      - /app/.next/cache:size=64m,noexec,nosuid
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 512m
+    pids_limit: 200
+    cpus: 1.0
+    logging:
+      driver: local
+      options:
+        max-size: 10m
+
+volumes:
+  specs_data:
+
+networks:
+  # The network Caddy is on, so it can reach http://specs:3000.
+  caddy:
+    name: ${CADDY_NETWORK:-n8n_default}
+    external: true

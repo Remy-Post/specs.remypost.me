@@ -1,0 +1,45 @@
+{
+  "system": {
+    "manufacturer": "Apple Inc.",
+    "model": "Mac17,8",
+    "version": "MacBook Pro (16-inch, M5 Pro, 2026)",
+    "serial": "FAKE-SERIAL-0001",
+    "uuid": "00000000-0000-0000-0000-000000000000"
+  },
+  "currentLoad": {
+    "currentLoad": 12.34,
+    "currentLoadUser": 8.06,
+    "currentLoadSystem": 4.28,
+    "cpus": [{ "load": 31.04 }, { "load": 20.0 }, { "load": 2.2 }, { "load": 0.04 }]
+  },
+  "fsSize": [
+    { "fs": "/dev/disk3s1s1", "mount": "/", "size": 994610155520, "used": 14000000000, "available": 150674354176 },
+    { "fs": "/dev/disk3s5", "mount": "/System/Volumes/Data", "size": 994610155520, "used": 807864315904, "available": 150674354176 },
+    { "fs": "/dev/disk6s1", "mount": "/Volumes/Installer", "size": 2000000000, "used": 1900000000, "available": 100000000 }
+  ],
+  "battery": {
+    "hasBattery": true,
+    "cycleCount": 49,
+    "isCharging": false,
+    "designedCapacity": 111578,
+    "maxCapacity": 107508,
+    "currentCapacity": 105687,
+    "percent": 100,
+    "acConnected": true,
+    "serial": "FAKE-BATTERY-SERIAL"
+  },
+  "processes": {
+    "all": 841,
+    "list": [
+      { "pid": 101, "name": "Google Chrome", "cpu": 3.1, "memRss": 1500000, "user": "someone", "command": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome", "path": "/Applications/Google Chrome.app" },
+      { "pid": 102, "name": "Google Chrome Helper (Renderer)", "cpu": 1.1, "memRss": 3000000 },
+      { "pid": 103, "name": "Google Chrome Helper (GPU)", "cpu": 0.5, "memRss": 500000 },
+      { "pid": 104, "name": "Xcode", "cpu": 0.4, "memRss": 2500000 },
+      { "pid": 105, "name": "com.apple.WebKit.WebContent", "cpu": 0.2, "memRss": 400000 },
+      { "pid": 106, "name": "com.apple.WebKit.Networking", "cpu": 0.1, "memRss": 100000 },
+      { "pid": 107, "name": "/Users/someone/secret/project/server", "cpu": 9, "memRss": 9000000 },
+      { "pid": 108, "name": "node --token=abc", "cpu": 0.1, "memRss": 700000 },
+      { "pid": 109, "name": "kernel_task", "cpu": 5.5, "memRss": 200000 }
+    ]
+  }
+}

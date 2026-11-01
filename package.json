@@ -1,0 +1,39 @@
+{
+  "name": "specs.remypost.me",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Live memory, CPU and disk numbers from one MacBook Pro. Appendix S of the Remy Post identity guidelines.",
+  "license": "MIT",
+  "engines": {
+    "node": ">=26"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "mkdir -p .next/standalone/.next && cp -R .next/static .next/standalone/.next/ && cp -R public .next/standalone/ && node .next/standalone/server.js",
+    "lint": "eslint .",
+    "typecheck": "next typegen && tsc --noEmit",
+    "test": "vitest run",
+    "check": "npm run lint && npm run typecheck && npm test"
+  },
+  "dependencies": {
+    "@fontsource-variable/archivo": "5.3.0",
+    "@fontsource-variable/newsreader": "5.3.0",
+    "@fontsource/fragment-mono": "5.3.0",
+    "next": "16.4.3",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "react-is": "19.3.1",
+    "recharts": "3.10.1",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.6",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "eslint": "9.39.5",
+    "eslint-config-next": "16.4.3",
+    "typescript": "6.0.3",
+    "vitest": "5.0.5"
+  }
+}

@@ -1,0 +1,28 @@
+# BEGIN specs — managed by specs.remypost.me/deploy/vm-setup.sh
+# specs.remypost.me: Next.js app in the "specs" container on the Docker network Caddy shares (n8n_default).
+# The page sets its own Content-Security-Policy (per-request nonce), so none is added here.
+(specs) {
+	encode zstd gzip
+	request_body {
+		max_size 64KB
+	}
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		X-Frame-Options "DENY"
+		Permissions-Policy "camera=(), microphone=(), geolocation=(), browsing-topics=()"
+		X-Robots-Tag "noindex, nofollow, noarchive"
+		-Server
+	}
+	reverse_proxy specs:3000
+}
+
+specs.remypost.me {
+	import specs
+}
+
+specs.remy-post.duckdns.org {
+	import specs
+}
+# END specs

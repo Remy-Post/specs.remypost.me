@@ -1,0 +1,125 @@
+{
+  "v": 1,
+  "at": "2026-11-01T19:05:00.000Z",
+  "machine": {
+    "model": "MacBook Pro (16-inch, M5 Pro, 2026)",
+    "chip": "Apple M5 Pro",
+    "cores": [
+      {
+        "name": "Super",
+        "count": 6
+      },
+      {
+        "name": "Performance",
+        "count": 12
+      }
+    ],
+    "memory": 51539607552,
+    "os": "macOS 27.2",
+    "bootedAt": "2026-10-27T14:20:34.000Z"
+  },
+  "memory": {
+    "total": 51539607552,
+    "used": 27058293963,
+    "app": 18683107737,
+    "wired": 4939212390,
+    "compressed": 3435973836,
+    "cached": 15139759718,
+    "swapUsed": 429496729,
+    "swapTotal": 2147483648,
+    "freePercent": 47,
+    "pressure": "normal"
+  },
+  "cpu": {
+    "load": 14.2,
+    "user": 9.6,
+    "system": 4.6,
+    "perCore": [
+      31.4,
+      22.0,
+      18.5,
+      12.1,
+      9.7,
+      8.0,
+      6.2,
+      5.1,
+      4.4,
+      3.8,
+      2.9,
+      2.2,
+      1.5,
+      1.1,
+      0.8,
+      0.5,
+      0.3,
+      0.1
+    ]
+  },
+  "disk": {
+    "total": 994610155520,
+    "used": 412300000000,
+    "free": 582310155520
+  },
+  "battery": {
+    "percent": 100,
+    "charging": false,
+    "onAC": true,
+    "cycles": 49,
+    "health": 96.4
+  },
+  "processes": {
+    "count": 841,
+    "top": [
+      {
+        "name": "Google Chrome",
+        "memory": 5476083302,
+        "cpu": 6.3
+      },
+      {
+        "name": "Code",
+        "memory": 3006477107,
+        "cpu": 3.1
+      },
+      {
+        "name": "Docker Desktop",
+        "memory": 2362232012,
+        "cpu": 1.4
+      },
+      {
+        "name": "Slack",
+        "memory": 1395864371,
+        "cpu": 0.6
+      },
+      {
+        "name": "Safari (WebKit)",
+        "memory": 1181116006,
+        "cpu": 0.9
+      },
+      {
+        "name": "Claude",
+        "memory": 1052266987,
+        "cpu": 2.2
+      },
+      {
+        "name": "WindowServer",
+        "memory": 773094113,
+        "cpu": 4.8
+      },
+      {
+        "name": "Figma",
+        "memory": 654982512,
+        "cpu": 0.2
+      },
+      {
+        "name": "Finder",
+        "memory": 354334801,
+        "cpu": 0.0
+      },
+      {
+        "name": "Spotify",
+        "memory": 311385128,
+        "cpu": 0.4
+      }
+    ]
+  }
+}

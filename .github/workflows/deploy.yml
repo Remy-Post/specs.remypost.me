@@ -1,0 +1,69 @@
+name: Deploy
+
+# Push to main -> CI (reused, so nothing is built twice) -> the repo is sent to the VM as a tarball. The deploy
+# key can only run ~/bin/publish-specs there, which builds the image, swaps the container and checks its health.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One deploy at a time; a newer push waits instead of cancelling a deploy that is already running.
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  deploy:
+    name: Publish to the VM
+    needs: ci
+    # A manual run from another branch still runs CI but never ships. The secrets sit in the "production"
+    # environment, which is limited to main (docs/operations.md, "Lock down the deploy").
+    if: github.ref == 'refs/heads/main'
+    environment: production
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Send the release
+        env:
+          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          git archive --format=tar.gz HEAD | ssh -i ~/.ssh/deploy_key \
+            -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=yes \
+            -o ConnectTimeout=20 -o ServerAliveInterval=30 \
+            "$DEPLOY_HOST"
+
+      - name: Smoke test (specs.remy-post.duckdns.org)
+        run: |
+          body=$(curl -fsS --retry 6 --retry-delay 5 --retry-all-errors --max-time 20 \
+            https://specs.remy-post.duckdns.org/api/health)
+          echo "$body"
+          grep -q '"ok":true' <<<"$body"
+
+      # The real domain needs its DNS record first (docs/operations.md); until then this only warns.
+      - name: Smoke test (specs.remypost.me, non-fatal)
+        continue-on-error: true
+        run: |
+          body=$(curl -fsS --retry 3 --retry-delay 5 --retry-all-errors --max-time 20 \
+            https://specs.remypost.me/api/health)
+          echo "$body"
+          grep -q '"ok":true' <<<"$body"

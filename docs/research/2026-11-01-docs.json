@@ -1,0 +1,647 @@
+[
+ {
+  "area": "Next.js (App Router) latest stable as of 2026-11-01: versions, standalone Docker, Route Handlers, caching model, proxy, Turbopack, ESLint, fonts, metadata, React 19.3",
+  "facts": [
+   {
+    "claim": "npm dist-tag latest: next 16.4.3 (published 2026-10-23), eslint-config-next 16.4.3, react 19.3.1 (2026-10-14), react-dom 19.3.1, @types/react 19.3.0, @types/react-dom 19.3.0 (peer @types/react ^19.3.0), typescript 7.0.2 (2026-07-08; last 6.x is 6.0.3), eslint 10.14.0 (dist-tag maintenance = 9.39.5), @types/node latest 26.6.6 (24.x line = 24.19.2). next canary is 16.5.0-canary.36 (do not use). No 'rc'/'beta' newer than stable.",
+    "source_url": "https://registry.npmjs.org/next",
+    "verified_how": "Ran `npm view <pkg> dist-tags --json`, `npm view next version time --json`, `npm view @types/react-dom@latest peerDependencies` from Bash on 2026-11-01"
+   },
+   {
+    "claim": "next@16.4.3 engines.node >=20.9.0; peerDeps react ^18.2.0 || ^19.0.0, react-dom same; dependencies: postcss 8.5.23, @next/env, styled-jsx 5.1.6, @swc/helpers, caniuse-lite, baseline-browser-mapping. eslint-config-next@16.4.3 peers: eslint >=9.0.0, typescript >=3.3.1; deps include typescript-eslint ^8.56.0, eslint-plugin-react-hooks ^7.1.0, @next/eslint-plugin-next 16.4.3.",
+    "source_url": "https://registry.npmjs.org/eslint-config-next",
+    "verified_how": "`npm view next@latest engines peerDependencies dependencies --json` and `npm view eslint-config-next@latest peerDependencies dependencies --json`"
+   },
+   {
+    "claim": "Next.js docs are versioned to 16.4.3 (llms.txt says 'Next.js 16.4.3', doc-version 16.4.3). Current major is 16; Next 15 backport line is 15.5.28.",
+    "source_url": "https://nextjs.org/docs/llms.txt",
+    "verified_how": "curl of the docs index + `npm view next dist-tags` (backport=15.5.28)"
+   },
+   {
+    "claim": "SECURITY: minimum safe 16.x is >=16.4.1. GHSA-673q-mjm6-r5xr (critical unauthenticated RCE in `use cache` functions returning typed arrays, >=16.0.0 <=16.4.0, fixed 16.4.1) and GHSA-2464-fhr4-w9xw (critical RCE in Image Optimization API with SVG, fixed 16.4.1) were published 2026-10-14. Also GHSA-vcvr-r3jv-pc5j (RCE in next/og ImageResponse, fixed 16.3.6) and GHSA-p3m5-59mp-jv5r (Server Actions DoS, fixed 16.4.1). No advisories newer than 2026-10-14 listed; 16.4.2 and 16.4.3 are bug-fix backports. Pin next@16.4.3 exactly.",
+    "source_url": "https://github.com/vercel/next.js/security/advisories",
+    "verified_how": "`gh api repos/vercel/next.js/security-advisories` (listed ranges and patched versions) and `gh release view v16.4.3`"
+   },
+   {
+    "claim": "react 19.3.1 and the patch lines 19.2.9/19.1.10/19.0.9 were all published 2026-10-14 (React Server Components transport protocol improvement). React 19.3.0 (2026-09-09) stabilised <ViewTransition>, Fragment Refs, added react-dom browser(), Trusted Types integration, and <Context> rendering directly in Server Components. 19.2 added <Activity>, useEffectEvent.",
+    "source_url": "https://react.dev/blog/2026/09/09/react-19-3",
+    "verified_how": "Read react.dev blog + facebook/react CHANGELOG.md via `gh api`; `npm view react time`"
+   },
+   {
+    "claim": "output:'standalone' is the supported way to build for Docker: it writes .next/standalone (traced files incl. needed node_modules, minimal server.js). public/ and .next/static are NOT copied automatically; copy to standalone/public and standalone/.next/static. Run with `node server.js`; PORT and HOSTNAME env vars control bind. next.config: `{ output: 'standalone' }`.",
+    "source_url": "https://nextjs.org/docs/app/api-reference/config/next-config-js/output",
+    "verified_how": "Fetched page as markdown (lastUpdated 2026-09-18)"
+   },
+   {
+    "claim": "Official Docker example exists at vercel/next.js examples/with-docker (Dockerfile, Dockerfile.bun, compose.yml, .dockerignore, next.config.ts with output:'standalone'). Dockerfile is 3 stages (deps -> builder -> runner) on `node:24.13.0-slim` (ARG NODE_VERSION; comment says to bump to latest LTS), runner sets NODE_ENV=production, PORT=3000, HOSTNAME=0.0.0.0, copies /app/public, .next/standalone, .next/static with --chown=node:node, `USER node`, `CMD [\"node\",\"server.js\"]`. It uses Debian slim, not alpine. Its .dockerignore excludes .env* (secrets must be passed at runtime, not baked in).",
+    "source_url": "https://github.com/vercel/next.js/tree/canary/examples/with-docker",
+    "verified_how": "`gh api repos/vercel/next.js/contents/examples/with-docker/...` and base64-decoded Dockerfile, compose.yml, .dockerignore, next.config.ts"
+   },
+   {
+    "claim": "Node.js status 2026-11-01: v26.13.0 is current and became LTS 'Lithium' on 2026-10-28 (EOL 2029-04-30); v24.22.2 'Krypton' is LTS (maintenance since 2026-10-20, EOL 2028-04-30); v22 EOL 2027-04-30; v20 EOL 2026-04-30 (dead, though next engines still says >=20.9); v25 EOL 2026-06-01. Docker Hub node:24.22.2-slim, node:24-slim, node:26.13.0-slim, node:26-slim all exist and include arm64/v8 (Oracle ARM64 OK).",
+    "source_url": "https://github.com/nodejs/Release/blob/main/schedule.json",
+    "verified_how": "Fetched nodejs.org/dist/index.json + nodejs/Release schedule.json; queried hub.docker.com/v2/repositories/library/node/tags/<tag> for architectures"
+   },
+   {
+    "claim": "node:sqlite: introduced v22.5.0, no flag since 22.13/23.4, promoted to Stability 1.2 'Release candidate' in v24.15.0 and v25.7.0 (so present as RC in 24.22.2 and 26.13.0). Next docs explicitly name `node:sqlite` as a synchronous embedded DB driver that completes during prerender and says to call `await connection()` (or `await io()` with Cache Components) before querying.",
+    "source_url": "https://nodejs.org/docs/latest-v24.x/api/sqlite.html",
+    "verified_how": "Parsed nodejs.org/docs/latest-v24.x/api/sqlite.json and latest-v26.x json meta.changes; read nextjs.org caching/connection/io docs"
+   },
+   {
+    "claim": "Route Handlers: file app/api/ingest/route.ts exporting `async function POST(request: Request|NextRequest)`; body parsed with standard Web API (`await request.json()`, `.text()`, `.formData()`); no bodyParser config needed. Only GET handlers can ever be cached/prerendered; POST is never cached. `params` is a Promise (await it); `RouteContext<'/path/[id]'>` is a global typed helper generated by next dev/build/typegen. Next.js returns 405 for unsupported methods and auto-implements OPTIONS.",
+    "source_url": "https://nextjs.org/docs/app/api-reference/file-conventions/route",
+    "verified_how": "Fetched route.js reference + getting-started/route-handlers as markdown"
+   },
+   {
+    "claim": "Runtime: Route Handlers default to the Node.js runtime. `export const runtime = 'nodejs'` is still accepted without Cache Components but the docs say remove the export; `runtime='edge'` is DEPRECATED. When cacheComponents is enabled, ANY `runtime` export (even 'nodejs') is unsupported and must be removed. `runtime` cannot be used in proxy.ts (Node.js only).",
+    "source_url": "https://nextjs.org/docs/app/api-reference/file-conventions/route-segment-config/runtime",
+    "verified_how": "Fetched page (lastUpdated 2026-10-15) and proxy docs"
+   },
+   {
+    "claim": "cacheComponents defaults to OFF (opt-in: `cacheComponents: true` in next.config, ideally with `partialPrefetching` set explicitly or a warning is logged), BUT create-next-app now scaffolds it ON by default for App Router. With it enabled, route segment configs `dynamic`, `revalidate`, `fetchCache` (and `runtime`) are removed and will ERROR; data is dynamic by default and you opt IN to caching with `use cache` + cacheLife. With it disabled (default), `export const dynamic = 'force-dynamic'` still works and is documented in the 'previous model' guide; v16 only removed those configs when Cache Components is enabled.",
+    "source_url": "https://nextjs.org/docs/app/api-reference/file-conventions/route-segment-config",
+    "verified_how": "Read Route Segment Config version history (v16.0.0 row), cacheComponents, create-next-app, migrating-to-cache-components and caching-without-cache-components pages"
+   },
+   {
+    "claim": "Forcing dynamic rendering for the public page that reads SQLite: (A) Cache Components OFF: `export const dynamic = 'force-dynamic'` in page.tsx (documented, not deprecated) or `await connection()` from 'next/server' before the query. (B) Cache Components ON: remove `dynamic`; call `await connection()` (or `await io()` from 'next/cache', preferred inside Cache Components since it can be cached/prefetched) before the node:sqlite read AND wrap the component in <Suspense> so the static shell ships. `connection()` replaces unstable_noStore. For GET Route Handlers with CC on, reading request/DB/async IO stops prerender automatically; `use cache` cannot sit directly in a handler body (extract helper).",
+    "source_url": "https://nextjs.org/docs/app/api-reference/functions/connection",
+    "verified_how": "Read connection, io, caching (Cache Components) and route-handlers pages; GitHub issue vercel/next.js#86379 confirms SQLite pages become static at build without these"
+   },
+   {
+    "claim": "`middleware.ts` was renamed to `proxy.ts` in Next.js 16: file `proxy.ts` at project root (or src/), named export `proxy` (default export also OK). The `middleware` filename/export is deprecated (still works; edge runtime only available by staying on middleware). Proxy always runs on Node.js runtime, `runtime` config in proxy throws. Without a `matcher` it runs on every request incl. _next/static, images and public/. Codemod: `npx @next/codemod@canary upgrade latest`. Config flag skipMiddlewareUrlNormalize is now skipProxyUrlNormalize. Proxy buffers request bodies up to 10MB (experimental.proxyClientMaxBodySize).",
+    "source_url": "https://nextjs.org/docs/app/api-reference/file-conventions/proxy",
+    "verified_how": "Read proxy.js reference and version-16 upgrade guide"
+   },
+   {
+    "claim": "Turbopack is the default bundler for both `next dev` and `next build` since 16.0 (no --turbopack flag needed). If a custom `webpack` config exists, `next build` FAILS unless you pass --webpack or --turbopack. `experimental.turbopack` moved to top-level `turbopack`. Filesystem caching on by default. `next dev` writes to .next/dev (separate from build output) and uses a lockfile.",
+    "source_url": "https://nextjs.org/docs/app/guides/upgrading/version-16",
+    "verified_how": "Read upgrade guide (lastUpdated 2026-10-15) and CLI reference (--webpack / --turbopack flags)"
+   },
+   {
+    "claim": "`next lint` is REMOVED (16.0) and `next build` no longer lints; the `eslint` key in next.config is removed. Use ESLint CLI with flat config `eslint.config.mjs`: `import { defineConfig, globalIgnores } from 'eslint/config'; import nextVitals from 'eslint-config-next/core-web-vitals'` (optional `eslint-config-next/typescript`). eslint-config-next@16 requires ESLint >=9; 16.4.0+ supports ESLint 10 (needs Node ^20.19/^22.13/>=24) but some bundled plugins lack ESLint 10 peer ranges so peer warnings/strict-peer failures are possible. Biome is the documented alternative. Codemod: `npx @next/codemod@canary next-lint-to-eslint-cli .`",
+    "source_url": "https://nextjs.org/docs/app/api-reference/config/eslint",
+    "verified_how": "Read ESLint page (lastUpdated 2026-10-15) and upgrade guide Removals section"
+   },
+   {
+    "claim": "TypeScript 7 (native, 7.0.2 = npm latest) has no JS compiler API; Next docs say `npm i -D typescript@^7` works for `next build` because Next shells out to the project-local `tsc` CLI by default (experimental.useTypeScriptCli; diagnostics are plain tsc output). BUT typescript-eslint 8.72.1 (a dependency of eslint-config-next) declares peer typescript >=4.8.4 <6.1.0, so TS 7 + eslint-config-next gives peer conflicts (npm ERESOLVE) until typescript-eslint adds TS7 (issue #10940 open). Open Next issue #99631: shipped .d.ts needs TS6 lib types (URLPattern) with skipLibCheck:false. Minimum TS for Next 16 is 5.1.",
+    "source_url": "https://nextjs.org/docs/app/api-reference/config/typescript",
+    "verified_how": "Read 'Using TypeScript 7' section; `npm view typescript-eslint peerDependencies`; `gh issue view` on vercel/next.js#99631 and typescript-eslint#10940"
+   },
+   {
+    "claim": "serverExternalPackages (stable, top-level, renamed from experimental.serverComponentsExternalPackages in 15.0) opts packages out of server bundling. Auto-externalised list includes better-sqlite3 and sqlite3 but not node:sqlite; node: builtins are Node core so need no entry. Docs do not mention any bundler special-casing of `node:sqlite`; it is only named as a sync driver in caching/connection/io pages.",
+    "source_url": "https://nextjs.org/docs/app/api-reference/config/next-config-js/serverExternalPackages",
+    "verified_how": "Read page + decoded packages/next/src/lib/server-external-packages.jsonc @v16.4.3 via gh api (grep sqlite -> better-sqlite3, sqlite3 only)"
+   },
+   {
+    "claim": "instrumentation.ts (root or src/) exporting `register()` is stable since 15.0; called once per server instance start and must finish before the server accepts requests; also optional `onRequestError`. register runs in all runtimes: guard Node-only code with `if (process.env.NEXT_RUNTIME === 'nodejs') await import('./instrumentation-node')`. Good place to open/migrate the SQLite DB once.",
+    "source_url": "https://nextjs.org/docs/app/guides/instrumentation",
+    "verified_how": "Read guide and instrumentation.js reference (version history v15.0.0 stable)"
+   },
+   {
+    "claim": "Metadata API: static `export const metadata: Metadata = {...}` or async `generateMetadata` (Server Components only). `metadataBase: new URL('https://specs.remypost.me')` in root layout is required for relative OG/icon URLs (build error otherwise). `themeColor`, `colorScheme` and `viewport` inside `metadata` are DEPRECATED (since 14): use a separate `export const viewport: Viewport = {...}`. File conventions (opengraph-image, icon, robots.ts, sitemap.ts) are static by default.",
+    "source_url": "https://nextjs.org/docs/app/api-reference/functions/generate-metadata",
+    "verified_how": "Fetched generate-metadata, generate-viewport, metadata-and-og-images pages and grepped deprecation notes"
+   },
+   {
+    "claim": "Fonts: `next/font/local` (`import localFont from 'next/font/local'; localFont({ src: './fonts/X.woff2', variable: '--font-x', display: 'swap' })`, path relative to calling file) self-hosts with no network. `next/font/google` downloads CSS+fonts at BUILD time (needs outbound network in the Docker build) and self-hosts; create-next-app uses Geist via next/font/google. 16.4.3 fixed 'extensionless Google font URLs in both bundlers'. Fontsource is not a Next feature: official Fontsource guide says `npm i @fontsource-variable/<font>` and `import '@fontsource-variable/<font>/wght.css'` (or the package root) in app/layout.tsx. Current @fontsource-variable/inter is 5.3.0 (npm maintainers jwr1, lotusdevshack; repo fontsource/font-files).",
+    "source_url": "https://nextjs.org/docs/app/api-reference/components/font",
+    "verified_how": "Read next/font API + fonts guide; fetched fontsource.org/docs/guides/nextjs and `npm view @fontsource-variable/inter repository.url maintainers`; v16.4.3 release notes"
+   },
+   {
+    "claim": "typedRoutes is stable top-level (`typedRoutes: true` in next.config; use instead of experimental.typedRoutes); needs TypeScript and `.next/types/**/*.ts` in tsconfig include; types generated by next dev/build/typegen. `next typegen` (since 15.5) generates PageProps / LayoutProps / RouteContext global helpers without a build (useful in CI: `next typegen && tsc --noEmit`).",
+    "source_url": "https://nextjs.org/docs/app/api-reference/config/next-config-js/typedRoutes",
+    "verified_how": "Read typedRoutes, typescript config and CLI typegen sections"
+   },
+   {
+    "claim": "Async Request APIs: sync access to cookies(), headers(), draftMode(), params and searchParams is fully REMOVED in 16 (must await). Also removed in 16: AMP, `next lint`, serverRuntimeConfig/publicRuntimeConfig (use env vars; use connection() before reading process.env if it must be read at runtime not build time), devIndicators.appIsrStatus/buildActivity/buildActivityPosition, experimental.dynamicIO and experimental.useCache (-> top-level cacheComponents), unstable_rootParams (-> next/root-params). Deprecated: middleware.ts, images.domains, next/legacy/image, preferredRegion, runtime='edge'. revalidateTag single-argument form is deprecated (needs cacheLife profile e.g. revalidateTag('x','max')).",
+    "source_url": "https://nextjs.org/docs/app/guides/upgrading/version-16",
+    "verified_how": "Read full Version 16 upgrade guide Removals/Breaking sections"
+   },
+   {
+    "claim": "Env vars: NEXT_PUBLIC_* are inlined at build time; server-only secrets (INGEST_TOKEN, DB path) are read from process.env at runtime in Route Handlers/Server Components. In a prerendered route, call `await connection()` first if the value must be read at runtime. Official Dockerfile pattern: never bake .env into the image (.dockerignore excludes it); pass with `docker run -e` / compose environment.",
+    "source_url": "https://nextjs.org/docs/app/guides/environment-variables",
+    "verified_how": "Read upgrade guide runtime-config section and with-docker .dockerignore comments"
+   },
+   {
+    "claim": "Standalone image must keep SQLite data outside the image: the runner stage runs as `node` user, so a mounted volume/dir for the .db file must be writable by uid 1000 (official Dockerfile does `mkdir .next && chown node:node .next` for the same reason). Build ordering: run `next build` once; build-time prerender of a DB-reading page will bake data in unless connection()/force-dynamic is used.",
+    "source_url": "https://github.com/vercel/next.js/blob/canary/examples/with-docker/Dockerfile",
+    "verified_how": "Read Dockerfile; cross-checked with caching/connection docs and issue #86379"
+   },
+   {
+    "claim": "React 19.x features worth using here: `use()` + Suspense for streaming server data; Server Components by default; ref as a prop (no forwardRef); <title>/<meta>/<link> hoisting; `useActionState`/`useFormStatus` (only if forms are added); <ViewTransition> (stable 19.3) for chart/latest-value transitions; <Activity> and useEffectEvent (19.2); Fragment Refs (19.3). For a read-only public dashboard the main wins are Server Components + Suspense; client components only for charts.",
+    "source_url": "https://react.dev/blog/2026/09/09/react-19-3",
+    "verified_how": "Read React 19.3 blog headings, React CHANGELOG and Next upgrade guide 'React 19.2' section"
+   }
+  ],
+  "deprecations_to_avoid": [
+   "`next lint` / `eslint` key in next.config / legacy .eslintrc.* (removed or legacy; use eslint.config.mjs flat config + `eslint .`)",
+   "`middleware.ts` + `export function middleware` (deprecated; use proxy.ts + `proxy`; and do not add a proxy matcher-less file that runs on every static asset)",
+   "`export const runtime = 'edge'` (deprecated) and, when cacheComponents is on, ANY `runtime` export incl. 'nodejs'",
+   "`export const dynamic/revalidate/fetchCache` when cacheComponents is true (errors); under cacheComponents use connection()/io() + <Suspense>, `use cache`, cacheLife",
+   "`unstable_noStore` (replaced by connection()); `unstable_cache` is the previous-model API (use `use cache` under Cache Components)",
+   "`experimental.dynamicIO`, `experimental.useCache`, `experimental.ppr`, `experimental_ppr` export, `experimental.turbopack`, `experimental.typedRoutes`, `experimental.serverComponentsExternalPackages` (removed/renamed: cacheComponents, turbopack, typedRoutes, serverExternalPackages)",
+   "Synchronous `cookies()`, `headers()`, `draftMode()`, `params`, `searchParams` (removed in 16; always await)",
+   "`serverRuntimeConfig` / `publicRuntimeConfig` / `next/config` getConfig (removed; use process.env)",
+   "`themeColor`, `colorScheme`, `viewport` keys inside `metadata` (use `export const viewport`)",
+   "`images.domains`, `next/legacy/image`, `preferredRegion` (deprecated)",
+   "`revalidateTag(tag)` single-argument form (deprecated; pass a cacheLife profile)",
+   "AMP (`next/amp`, `amp` config) removed; `next export` (use output:'export' only if static, not applicable here)",
+   "TypeScript 7 together with eslint-config-next/typescript-eslint 8.72.1 (peer range <6.1.0); keep typescript 6.0.3 if you lint, or skip type-aware lint",
+   "Node 20 base images (EOL 2026-04-30) and Node 25 (EOL); do not use next@<16.4.1 (critical RCEs in `use cache` and image optimizer); do not use canary (16.5.0-canary.*)",
+   "`next start` is not the documented runner for output:'standalone'; use `node server.js` from .next/standalone",
+   "Baking .env / INGEST token into the Docker image or build args; passing secrets via NEXT_PUBLIC_*"
+  ],
+  "recommended_versions": [
+   "next 16.4.3 (exact pin, ^16.4.3 acceptable; >=16.4.1 mandatory for security)",
+   "react 19.3.1 and react-dom 19.3.1",
+   "@types/react 19.3.0 and @types/react-dom 19.3.0",
+   "typescript 6.0.3 (recommended while using eslint-config-next/typescript-eslint 8.72.1); typescript 7.0.2 works for `next build` per Next docs but conflicts with typescript-eslint peer range",
+   "eslint 9.39.5 (zero peer friction) or 10.14.0 (supported by eslint-config-next>=16.4.0, expect peer warnings); eslint-config-next 16.4.3",
+   "@types/node 24.19.2 (match runtime major)",
+   "Node.js 24.22.2 LTS in Docker: `FROM node:24.22.2-slim` (arm64/v8 verified); Node 26.13.0 'Lithium' (LTS since 2026-10-28) is acceptable but only 4 days old and the official example is still on 24",
+   "@fontsource-variable/inter 5.3.0 (or any @fontsource-variable/* 5.x) if not using next/font/local",
+   "babel-plugin-react-compiler 1.0.0 only if enabling React Compiler (not needed)",
+   "tailwindcss and @tailwindcss/postcss 4.3.3 if Tailwind is wanted (official with-docker example uses Tailwind ^4)"
+  ],
+  "code_snippets": [
+   "// next.config.ts (Cache Components OFF, simplest for this app)\nimport type { NextConfig } from 'next'\nconst nextConfig: NextConfig = {\n  output: 'standalone',\n  typedRoutes: true,\n  poweredByHeader: false,\n}\nexport default nextConfig\n// If you turn cacheComponents ON instead: add `cacheComponents: true, partialPrefetching: true`, delete every `dynamic`/`revalidate`/`runtime` export, and use `await connection()` + <Suspense> in the page.",
+   "// app/api/ingest/route.ts  (no `runtime` export needed; Node.js is default)\nimport { timingSafeEqual } from 'node:crypto'\nimport type { NextRequest } from 'next/server'\nexport async function POST(request: NextRequest) {\n  const auth = request.headers.get('authorization') ?? ''\n  const expected = `Bearer ${process.env.INGEST_TOKEN ?? ''}`\n  const a = Buffer.from(auth), b = Buffer.from(expected)\n  if (!process.env.INGEST_TOKEN || a.length !== b.length || !timingSafeEqual(a, b))\n    return Response.json({ error: 'unauthorized' }, { status: 401 })\n  const body = await request.json() // validate shape + enforce your own size cap; Route Handlers have no built-in body limit\n  // ... insert into node:sqlite ...\n  return Response.json({ ok: true })\n}",
+   "// app/page.tsx (Cache Components OFF)\nexport const dynamic = 'force-dynamic'\n// (alternative, works in both models) import { connection } from 'next/server'; await connection() before the node:sqlite read",
+   "// eslint.config.mjs\nimport { defineConfig, globalIgnores } from 'eslint/config'\nimport nextVitals from 'eslint-config-next/core-web-vitals'\nimport nextTs from 'eslint-config-next/typescript'\nexport default defineConfig([\n  ...nextVitals,\n  ...nextTs,\n  globalIgnores(['.next/**', 'out/**', 'build/**', 'next-env.d.ts']),\n])\n// package.json scripts: \"lint\": \"eslint .\", \"typecheck\": \"next typegen && tsc --noEmit\"",
+   "// app/layout.tsx\nimport type { Metadata, Viewport } from 'next'\nimport '@fontsource-variable/inter' // or: import localFont from 'next/font/local'\nexport const metadata: Metadata = { metadataBase: new URL('https://specs.remypost.me'), title: 'Specs', description: 'Live MacBook Pro resource numbers' }\nexport const viewport: Viewport = { themeColor: '#0b0b0f', colorScheme: 'dark light' }",
+   "# Dockerfile deltas vs official with-docker (keep its 3-stage structure, npm ci path)\nARG NODE_VERSION=24.22.2-slim\n# runner: ENV DB_PATH=/data/specs.db ; RUN mkdir -p /data && chown node:node /data ; VOLUME /data ; USER node ; CMD [\"node\",\"server.js\"]",
+   "// instrumentation.ts\nexport async function register() {\n  if (process.env.NEXT_RUNTIME === 'nodejs') {\n    const { initDb } = await import('./lib/db')\n    initDb() // open node:sqlite DatabaseSync, PRAGMA journal_mode=WAL, CREATE TABLE IF NOT EXISTS\n  }\n}"
+  ],
+  "open_questions": [
+   "node:sqlite under `next build` (Turbopack) is not explicitly documented as supported beyond the caching docs naming it; Node builtins are normally externalised, but run a smoke test (`next build` then `node .next/standalone/server.js` in the arm64 container) before relying on it. It is also only Stability 1.2 (release candidate) in Node 24.15+/26, so API can still shift; better-sqlite3 13.0.3 (engines node >=22, in Next's auto-external list) is the fallback.",
+   "Whether to enable Cache Components: create-next-app defaults to ON, docs say both it and Partial Prefetching become the only mode in the next major (so `dynamic`/`revalidate` exports will eventually disappear). Not verified which is less risky for a SQLite-backed dynamic page; either works per docs.",
+   "TypeScript 7.0.2 vs 6.0.3: Next docs support TS7 via tsc CLI, but typescript-eslint (via eslint-config-next) caps at <6.1.0; not tested here (no install performed).",
+   "Node 26.13.0 compatibility with Next 16.4.3 was not verified in docs (engines says >=20.9.0 only); official example still on Node 24.",
+   "Out of area but noticed: npm shows n8n latest = 2.45.7 while the plan pins 2.45.4."
+  ]
+ },
+ {
+  "area": "Node.js runtime + storage (as of 2026-11-01)",
+  "facts": [
+   {
+    "claim": "Node release schedule: v26 'Lithium' is Active LTS (LTS started 2026-10-28, maintenance 2027-10-20, EOL 2029-04-30). v24 'Krypton' is Maintenance LTS (maintenance since 2026-10-20, EOL 2028-04-30). v22 'Jod' is Maintenance LTS (EOL 2027-04-30). v20 'Iron' is EOL (2026-04-30). v25 is EOL (2026-06-01). v27 is only 27.0.0-alpha.0 (2026-10-29), not usable.",
+    "source_url": "https://raw.githubusercontent.com/nodejs/Release/main/schedule.json",
+    "verified_how": "curl of nodejs/Release schedule.json (the data behind the nodejs.org release schedule) plus https://nodejs.org/dist/index.json"
+   },
+   {
+    "claim": "Current releases: Node 26.13.0 (2026-10-28, LTS), 24.22.2 (2026-10-27, LTS), 22.23.4 (2026-10-20, LTS).",
+    "source_url": "https://nodejs.org/dist/index.json",
+    "verified_how": "curl + python parse of dist/index.json; local `node -v` on the Mac is also v26.13.0"
+   },
+   {
+    "claim": "Official Docker images node:26-alpine, node:26-slim, node:24-alpine, node:24-slim, node:22-alpine, node:lts-alpine and node:lts-slim all publish linux/arm64 (v8) manifests. node:lts-* currently resolves to 26 (updated 2026-10-28). Variant list in docker-node versions.json for 22, 24 and 26: alpine3.23, alpine3.24, bookworm, bookworm-slim, trixie, trixie-slim. The `-slim` tags are Debian (glibc); `-alpine` is musl.",
+    "source_url": "https://hub.docker.com/_/node",
+    "verified_how": "Docker Hub v2 API tag manifests (hub.docker.com/v2/repositories/library/node/tags/<tag>) and raw nodejs/docker-node versions.json. Also pulled and ran node:26-alpine, node:26-slim and node:24-alpine with --platform linux/arm64 on the local Colima VM (Ubuntu 24.04 aarch64). All reported `uname -m` = aarch64."
+   },
+   {
+    "claim": "node:sqlite stability: Stability 1.2 - Release candidate in both v26 and v24 docs. It is no longer behind --experimental-sqlite (since v22.13.0 / v23.4.0). RC status came in v25.7.0 and was backported to v24.15.0. No flag is needed in 24 or 26.",
+    "source_url": "https://nodejs.org/docs/latest-v26.x/api/sqlite.html",
+    "verified_how": "Parsed https://nodejs.org/docs/latest-v26.x/api/sqlite.json and latest-v24.x/api/sqlite.json (stability and meta.changes fields)"
+   },
+   {
+    "claim": "No ExperimentalWarning is printed by `require('node:sqlite')` or `new DatabaseSync(':memory:')` on node:24-alpine (v24.22.2), node:26-alpine and node:26-slim (v26.13.0), nor on local Node 26.13.0. WAL mode works (`PRAGMA journal_mode=wal` returned 'wal').",
+    "source_url": "https://nodejs.org/docs/latest-v26.x/api/sqlite.html",
+    "verified_how": "Ran in Docker arm64 containers and locally, with stderr merged into stdout. Output showed no warning lines."
+   },
+   {
+    "claim": "API churn in Node 26: node:sqlite DatabaseSync and StatementSync were renamed to Database and Statement in v26.11.0. The old names remain as deprecated aliases with a documentation-only deprecation (DEP0210, DEP0211), so there is no runtime warning. node:sqlite in v24 exports only DatabaseSync/StatementSync/Session/constants/backup (no Database). Bundled SQLite is 3.53.4 in the v24 and v26 docker images and 3.54.0 in the local Homebrew Node 26.13.0.",
+    "source_url": "https://nodejs.org/docs/latest-v26.x/api/deprecations.html",
+    "verified_how": "Read deprecations.html, CHANGELOG_V26.md (PR #65988), and ran `Object.keys(require('node:sqlite'))` on v26.13.0 and in node:24-alpine. `select sqlite_version()` was run in each image."
+   },
+   {
+    "claim": "better-sqlite3 latest is 13.0.3 (published 2026-08-05), engines node >=22. v13.0.0 (2026-07-21) moved to N-API. It dropped the prebuild-install dependency, and prebuilt binaries now ship inside the npm tarball under prebuilds/: linux-arm64.node, linuxmusl-arm64.node, linux-x64, linuxmusl-x64, darwin-arm64, darwin-x64, win32-x64, win32-arm64. Its only dependency is node-addon-api ^8. Tarball is about 26-27 MB unpacked.",
+    "source_url": "https://github.com/WiseLibs/better-sqlite3/releases/tag/v13.0.0",
+    "verified_how": "`npm view better-sqlite3 version time engines`, `npm pack better-sqlite3@13.0.3` and listing the tarball, and the GitHub release notes for v13.0.0 and v13.0.3"
+   },
+   {
+    "claim": "`npm install better-sqlite3@13.0.3` on node:26-alpine, node:26-slim and node:24-alpine (arm64) succeeded with no python, make or g++ present and no compile step (no build/Release dir). `new Database(':memory:')` worked on all three. Module ABI 147 on Node 26 and 137 on Node 24 both loaded the same N-API prebuild. SQLite version inside it is 3.53.4.",
+    "source_url": "https://www.npmjs.com/package/better-sqlite3",
+    "verified_how": "Ran the install and a smoke test in the three arm64 Docker images"
+   },
+   {
+    "claim": "Next.js latest is 16.4.3 (engines node >=20.9.0). better-sqlite3 is in Next's built-in default serverExternalPackages list, so it is not bundled and must be resolvable from node_modules at runtime. This matters for the standalone output, which relies on file tracing to copy the package and its prebuilds/*.node.",
+    "source_url": "https://github.com/vercel/next.js/blob/canary/packages/next/src/lib/server-external-packages.json",
+    "verified_how": "`npm view next dist-tags engines`, and grep of server-external-packages.json on canary (the file is on canary, which may differ from the 16.4.3 tag). The standalone tracing of prebuilds/ was NOT tested."
+   },
+   {
+    "claim": "Corepack is no longer distributed with Node.js starting with v25.0.0. The Node 26 docker images have no `corepack` binary (`corepack: not found` in node:26-alpine and node:26-slim). node:24-alpine still ships corepack 0.36.0, bundled with npm 11.19.1. Corepack is still published on npm: `npm i -g corepack` gives 0.36.0 (latest). The v26 docs have no corepack page (404).",
+    "source_url": "https://github.com/nodejs/corepack/blob/main/README.md",
+    "verified_how": "Corepack README says it ships with Node 14.19.0 up to but not including 25.0.0. CHANGELOG_V25.md lists `build: stop distributing Corepack` (PR #57617). Ran `corepack --version` in docker images. `npm view corepack version`."
+   },
+   {
+    "claim": "pnpm latest is 12.16.1 (published 2026-10-27, engines node >=18). Older lines: latest-11 11.28.9, latest-10 10.34.9. next-12 is 12.17.0 (pre-release).",
+    "source_url": "https://www.npmjs.com/package/pnpm",
+    "verified_how": "`npm view pnpm dist-tags version engines`, and the time field for 12.16.1"
+   },
+   {
+    "claim": "--env-file=file, --env-file-if-exists=file and process.loadEnvFile(path) are all stable (no longer experimental) since v24.10.0 and v22.21.0, so they are stable in 24 and 26. --env-file was added in v20.6.0, loadEnvFile in v21.7.0/v20.12.0, and multi-line values are supported. The env file does not override variables already set in the environment (standard documented behavior, not re-tested here). The flag must come before the script, e.g. `node --env-file=.env agent.js`. In a launchd plist, put it in ProgramArguments or use EnvironmentVariables.",
+    "source_url": "https://nodejs.org/docs/latest-v26.x/api/cli.html#--env-filefile",
+    "verified_how": "Parsed cli.json and process.json from nodejs.org/docs/latest-v26.x (meta.changes)"
+   },
+   {
+    "claim": "node:http (http.createServer) is core and stable (Stability 2), so a zero-dependency agent that serves GET /snapshot as JSON is fine on Node 24 or 26. Bind it to 127.0.0.1, or to the Colima-reachable interface only if host.lima.internal must reach it.",
+    "source_url": "https://nodejs.org/docs/latest-v26.x/api/http.html",
+    "verified_how": "Not separately re-verified in this run. This is standard Node core knowledge, and the stability index was not parsed."
+   },
+   {
+    "claim": "Tooling versions seen in the registry: n8n latest is 2.45.7 (the plan pins 2.45.4, which is 3 patch releases behind). @types/node has dist-tags that need picking per major (not enumerated).",
+    "source_url": "https://www.npmjs.com/package/n8n",
+    "verified_how": "`npm view n8n version`"
+   }
+  ],
+  "deprecations_to_avoid": [
+   "Node 20 (EOL 2026-04-30) and Node 25 (EOL 2026-06-01). Do not use node:20-* or node:25-* images.",
+   "Node 22 for a new build: it is Maintenance, EOL 2027-04-30.",
+   "Relying on Corepack inside Node 26 images (`corepack enable` fails: binary absent). Do not rely on it for pnpm. Either `npm i -g corepack@0.36.0` explicitly, or `npm i -g pnpm@12.16.1` (or the standalone pnpm installer). With Node 24 images corepack exists but is on the way out, so avoid depending on it.",
+   "`import { DatabaseSync }` from node:sqlite as the long-term name on Node 26: it is a doc-deprecated alias (DEP0210/DEP0211, no runtime warning yet). Prefer `Database ?? DatabaseSync` if code must run on both 24 and 26.",
+   "better-sqlite3 older than 13.x on Node 26 (pre-13 used prebuild-install, ABI-specific binaries, and `engines` limits). Use 13.0.3 or newer.",
+   "`--experimental-sqlite` flag (no longer needed since 22.13/23.4; harmless to drop).",
+   "Unprefixed `require('sqlite')`: node:sqlite works only with the `node:` scheme."
+  ],
+  "recommended_versions": [
+   "Runtime: Node 26.13.0 LTS 'Lithium'. Docker base `node:26-alpine` (or `node:26-slim` if glibc is preferred), pinned by digest or by `node:26.13.0-alpine3.24`. Active LTS to 2027-10-20, EOL 2029-04-30. Fallback: node:24-alpine (24.22.2), fully supported to 2028-04-30.",
+   "Mac host agent: local Homebrew Node is already 26.13.0. Use `node --env-file=...` and node:http, no dependencies.",
+   "Storage recommendation: node:sqlite (Database on 26, DatabaseSync alias on 24) with WAL. Reasons: zero native dependencies (no tracing of .node files in Next standalone, no musl vs glibc or ABI concerns, no ~26 MB addon); RC status with no flag and no ExperimentalWarning verified on arm64 24 and 26; the workload is trivial (one insert every 5 min plus a few reads); the sync API is the same as better-sqlite3 for this use. Wrap it in one small db.ts module so swapping to better-sqlite3 is a 10-line change. Caveats: still 1.2 RC so API can still change (the 26.11 rename shows it does); SQLite version tracks Node (3.53.4 in the images); `node:sqlite` bundling in Next 16.4.3 webpack/Turbopack was NOT tested (see open_questions).",
+   "Alternative if the Next build chokes on node:sqlite or a strictly stable API is wanted: better-sqlite3 13.0.3 (npm view confirmed; prebuilt linux-arm64 and linuxmusl-arm64 are inside the tarball, so no build tools are needed in Docker). Add `serverExternalPackages: ['better-sqlite3']` (already default) and verify the standalone output contains node_modules/better-sqlite3/prebuilds/*.node.",
+   "pnpm 12.16.1 (install with `npm i -g pnpm@12.16.1` in the Dockerfile, not via Corepack on Node 26). Next.js 16.4.3.",
+   "corepack 0.36.0 only if Corepack is wanted (npm install -g corepack@0.36.0)."
+  ],
+  "code_snippets": [
+   "const sqlite = require('node:sqlite'); const DB = sqlite.Database ?? sqlite.DatabaseSync; const db = new DB('/data/specs.db'); db.exec('PRAGMA journal_mode=WAL; PRAGMA busy_timeout=5000;');",
+   "node --env-file=/Users/<me>/.specs-agent.env agent.js",
+   "process.loadEnvFile('.env') // throws if the file is missing; use --env-file-if-exists for optional files"
+  ],
+  "open_questions": [
+   "Not tested: whether Next 16.4.3 (webpack or Turbopack) builds a Route Handler that imports `node:sqlite` cleanly and whether standalone output includes it (it is a builtin, so it should be external, but unverified). A throwaway `next build` check is advised before committing to node:sqlite.",
+   "Not tested: whether Next standalone file tracing copies better-sqlite3's prebuilds/linuxmusl-arm64.node into .next/standalone/node_modules (only the plain npm install was verified).",
+   "Not verified from a primary source: the exact `node:http` stability index, and whether Docker `node:26-*` tags were rebuilt after 26.13.0. Both were just not checked.",
+   "Whether node:lts-* floating tags are desirable (they just flipped from 24 to 26 on 2026-10-28) versus pinning node:26 explicitly. Pinning is advised.",
+   "The n8n pin is 2.45.4 but 2.45.7 is current on npm. Whether to bump was not assessed (out of scope for this area)."
+  ]
+ },
+ {
+  "area": "n8n 2.x (running 2.45.4): Schedule Trigger, HTTP Request, credentials, CLI import/publish, public API, Execute Command",
+  "facts": [
+   {
+    "claim": "npm registry (checked 2026-11-01): n8n dist-tags are latest=2.45.7, stable=2.45.7, beta=next=2.46.3. 2.45.4 was published 2026-10-26 and is 3 patches behind stable. 2.45.x is the patch-only line (2.45.5, 2.45.6 and 2.45.7 released after it). Engines: node >=24 (matters only for npm installs, not the Docker image). The `rc` tag points at 1.123.91 (an old v1 tag, ignore it).",
+    "source_url": "https://registry.npmjs.org/n8n",
+    "verified_how": "Bash: `npm view n8n version dist-tags --json`; `npm view n8n time --json`; `npm view n8n@2.45.4 engines`"
+   },
+   {
+    "claim": "Docker Hub n8nio/n8n:2.45.4 exists as a multi-arch image (amd64 + arm64). Tags `stable` and `2.45.7` also exist. The Mac/Colima setup can pin 2.45.4 or move to 2.45.7 with no config change.",
+    "source_url": "https://hub.docker.com/v2/repositories/n8nio/n8n/tags/2.45.4",
+    "verified_how": "Bash curl of the Docker Hub API: images[].architecture and last_updated"
+   },
+   {
+    "claim": "The npm `latest` dist-tag of n8n-nodes-base is stale: it reads 2.15.1, while the `stable` tag is 2.45.6. n8n@2.45.4 pins n8n-nodes-base 2.45.3, n8n-core 2.45.3 and n8n-workflow 2.45.1. Node typeVersions below were read from the 2.45.3 tarball, which is the version 2.45.4 actually runs.",
+    "source_url": "https://registry.npmjs.org/n8n-nodes-base",
+    "verified_how": "Bash: `npm view n8n@2.45.4 dependencies.n8n-nodes-base`; `npm pack n8n-nodes-base@2.45.3` and inspected dist/"
+   },
+   {
+    "claim": "Schedule Trigger: node type `n8n-nodes-base.scheduleTrigger`. Supported typeVersions are [1, 1.1, 1.2, 1.3, 1.4], so the current one is 1.4. Version 1.4 adds the node settings `missedExecutionMode` (coalesce | coalesce_owner | skip, default skip) and `misfireGraceSeconds`. The docs also say that from 2.45.0, Seconds and Minutes intervals run at uniform intervals from publication rather than on clock boundaries.",
+    "source_url": "https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.scheduletrigger/",
+    "verified_how": "Read ScheduleTrigger.node.js in the n8n-nodes-base@2.45.3 tarball (version array, '@version' gte 1.4 displayOptions); WebFetch of the docs page"
+   },
+   {
+    "claim": "Schedule Trigger 'every 5 minutes' JSON is `\"parameters\": {\"rule\": {\"interval\": [{\"field\": \"minutes\", \"minutesInterval\": 5}]}}`. Allowed `field` values are seconds, minutes, hours, days, weeks, months and cronExpression. `minutesInterval` has min 1 and max 59, and its default is 5. The cron alternative is `{\"field\":\"cronExpression\",\"expression\":\"*/5 * * * *\"}` (the docs list `*/5 * * * *` as every 5 minutes). The workflow must be saved and published for the trigger to run. Timezone comes from the workflow setting, else the instance timezone.",
+    "source_url": "https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.scheduletrigger/",
+    "verified_how": "Parameter names read from ScheduleTrigger.node.js (rule -> interval -> field/minutesInterval); the docs page confirms the cron example. The `expression` key name for cron is not seen in the source I read; it comes from n8n's field naming and should be checked against an export from the UI."
+   },
+   {
+    "claim": "The Cron node (`n8n-nodes-base.cron`, version 1) is NOT removed in 2.45.3. It still ships with `hidden: true` (it does not appear in the node picker), its codex points to the Schedule Trigger docs, and existing workflows using it still load. It is effectively deprecated/legacy, not deleted. Use Schedule Trigger. The docs do not describe the Cron node as removed. The 2.0 breaking-changes page says the Start node was removed, and does not list Cron.",
+    "source_url": "https://docs.n8n.io/2-0-breaking-changes/",
+    "verified_how": "Read Cron/Cron.node.js and Cron.node.json in the n8n-nodes-base@2.45.3 tarball; WebFetch of the breaking-changes page"
+   },
+   {
+    "claim": "HTTP Request node: type `n8n-nodes-base.httpRequest`. Versions are 1, 2, 3, 4, 4.1, 4.2, 4.3, 4.4 and 4.5, with defaultVersion 4.5, so the current typeVersion is 4.5. Versions 4.x all use the same V3 implementation class.",
+    "source_url": "https://github.com/n8n-io/n8n/tree/n8n@2.45.4/packages/nodes-base/nodes/HttpRequest",
+    "verified_how": "Read HttpRequest/HttpRequest.node.js (nodeVersions map, defaultVersion: 4.5) in the n8n-nodes-base@2.45.3 tarball"
+   },
+   {
+    "claim": "HTTP Request 4.5 exact parameter names. Core: `method` (GET, POST, PUT, ...), `url`, `authentication` (none | predefinedCredentialType | genericCredentialType), `genericAuthType` (credential type name, e.g. httpHeaderAuth or httpBearerAuth), `nodeCredentialType` (only for predefined). Body: `sendBody` (boolean), `contentType` (json | form-urlencoded | multipart-form-data | binaryData | raw), `specifyBody` (keypair | json), `jsonBody` (string, usually an expression), `bodyParameters`. Headers: `sendHeaders`, `specifyHeaders`, `headerParameters`, `jsonHeaders`. Options live in `options`. The timeout key is `options.timeout` in ms, min 1, default 10000; it is the time to wait for response headers. Other option keys include `response`, `redirect`, `proxy` and `batching`. Credentials are bound at node level as `\"credentials\": {\"httpHeaderAuth\": {\"id\": \"...\", \"name\": \"...\"}}`.",
+    "source_url": "https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.httprequest/",
+    "verified_how": "Read HttpRequest/V3/Description.js in the n8n-nodes-base@2.45.3 tarball (names/values and the options.timeout default); WebFetch of the docs page"
+   },
+   {
+    "claim": "Node-level settings are top-level keys on the node object, not under parameters: `retryOnFail` (boolean), `maxTries` (number), `waitBetweenTries` (ms), `alwaysOutputData`, `executeOnce`, and `onError` with values `stopWorkflow` | `continueRegularOutput` | `continueErrorOutput`. The legacy `continueOnFail` key still exists in the type. The engine clamps maxTries to 2..5 (default 3) and waitBetweenTries to 0..5000 ms (default 1000). The docs error-handling page does not document these settings, so the source is the authority.",
+    "source_url": "https://github.com/n8n-io/n8n/blob/n8n@2.45.1/packages/workflow/src/interfaces.ts",
+    "verified_how": "Read INode and OnError in n8n-workflow@2.45.1 interfaces.d.ts; read getRetryParams in n8n-core@2.45.3 workflow-execute.js (Math.min(5, Math.max(2, maxTries||3)), Math.min(5000, Math.max(0, waitBetweenTries||1000)))"
+   },
+   {
+    "claim": "Header Auth credential: type name `httpHeaderAuth`, display name 'Header Auth'. Fields are `name` (the header name, e.g. Authorization or X-Ingest-Key) and `value` (password-type field; for Authorization it must include the 'Bearer ' prefix). It sends the single header name: value. The alternative `httpBearerAuth` (display name 'Bearer Auth') has the single field `token` and sends `Authorization: Bearer <token>`. Both are genericAuth credentials, so they are valid for `authentication: genericCredentialType`. The docs UI list names 'Header auth', and also 'Simplified Custom Auth' (httpTemplatedCustomAuth), which is the newer option. Plain httpHeaderAuth and httpBearerAuth are still supported.",
+    "source_url": "https://github.com/n8n-io/n8n/tree/n8n@2.45.4/packages/nodes-base/credentials",
+    "verified_how": "Read HttpHeaderAuth.credentials.js and HttpBearerAuth.credentials.js in the n8n-nodes-base@2.45.3 tarball; the genericAuthType hint text in HttpRequest/V3/Description.js"
+   },
+   {
+    "claim": "`n8n import:credentials --input=file.json` expects a JSON ARRAY of credential objects; a bare object is rejected with 'Make sure the credentials are contained in an array'. If an entry's `data` is a plain (decrypted) object, the CLI encrypts it with the instance key (`cipher.encryptV2`) before saving. So plaintext credential JSON is valid input. Flags: --input/-i, --separate, --include, --exclude, --userId, --projectId. The docs page for the CLI does not state this encryption behavior; the source does. Matching `id`s overwrite existing credentials. Use a stable id (1-16 chars) so workflow nodes can reference `credentials.httpHeaderAuth.id`.",
+    "source_url": "https://github.com/n8n-io/n8n/blob/n8n@2.45.4/packages/cli/src/commands/import/credentials.ts",
+    "verified_how": "Read import/credentials.ts at tag n8n@2.45.4 (Array.isArray check ~line 483; 'plain data / decrypted input. Should be encrypted first' -> cipher.encryptV2 ~line 499); WebFetch of the CLI docs page, which is silent on it"
+   },
+   {
+    "claim": "`n8n import:workflow --input=file.json` accepts a single workflow object or an array (--separate imports *.json from a directory). The default `--activeState=false` imports every workflow UNPUBLISHED. `--activeState=fromJson` only works in queue/multi-main mode and errors in regular mode. IDs in the file are kept, and a matching id overwrites. Include an `id` in the JSON so the next command can target it. The workflow must reference credentials by `{id, name}` matching an imported credential. Use --projectId or --userId (mutually exclusive) to pick the owner; the default owner is the instance owner.",
+    "source_url": "https://github.com/n8n-io/n8n/blob/n8n@2.45.4/packages/cli/src/commands/import/workflow.ts",
+    "verified_how": "Read import/workflow.ts at tag n8n@2.45.4 (flagsSchema, fromJson guard, readWorkflows array handling); WebFetch of docs.n8n.io/hosting/cli-commands/"
+   },
+   {
+    "claim": "Yes: in 2.x 'publish' replaced 'activate'. The editor toggle became Publish/Unpublish buttons. CLI: `n8n publish:workflow --id=<ID> [--versionId=<VID>]` and `n8n unpublish:workflow --id=<ID>|--all`. `publish:workflow --all` was removed. `n8n update:workflow --id=X --active=true` is deprecated and 'will be removed' but still works (it publishes the current version). The docs say changes apply without restart when N8N_USE_WORKFLOW_PUBLICATION_SERVICE is on (default; polls every 15 s), whereas the command's own log text says 'Please restart n8n for changes to take effect if n8n is currently running'. These conflict. Plan on waiting about 15 s, and `docker restart` as a fallback if the trigger does not fire. The external hook `workflow.activeChange` is deprecated in favour of `workflow.published`.",
+    "source_url": "https://docs.n8n.io/hosting/cli-commands/",
+    "verified_how": "WebFetch of docs.n8n.io/hosting/cli-commands/ and /2-0-breaking-changes/; read cli/src/commands/publish/workflow.ts at tag n8n@2.45.4"
+   },
+   {
+    "claim": "Public REST API is available on self-hosted at `<host>/api/v1`. Auth is the header `X-N8N-API-KEY` (OpenAPI apiKey scheme; an API key is created in the UI under Settings > n8n API). Workflow endpoints at tag 2.45.4 include createWorkflow (POST /workflows), publishWorkflow (POST /workflows/{workflowId}/publish, body optional {versionId,name,description}, scope workflow:activate) and unpublishWorkflow. `activateWorkflow` (POST /workflows/{workflowId}/activate) and `deactivateWorkflow` still exist but are marked DEPRECATED ('use POST /workflows/{id}/publish instead'). The POST /workflows body requires `name`, `nodes`, `connections` and `settings`; `active`, `id`, `versionId` and `tags` are read-only. POST /credentials takes {name, type, data, ...} and returns the stored credential; `data` is writeOnly. `isApiKeyAuthEnabled()` exists, so key auth can be disabled by config. The API is not available on the free trial.",
+    "source_url": "https://github.com/n8n-io/n8n/tree/n8n@2.45.4/packages/cli/src/public-api/v1",
+    "verified_how": "Read openapi.yml (securitySchemes ApiKeyAuth name X-N8N-API-KEY) and handlers/workflows/spec/paths/{createWorkflow,activateWorkflow,publishWorkflow}.generated.yml and handlers/credentials/spec/paths/createCredential.generated.yml at tag n8n@2.45.4; WebFetch of docs.n8n.io/api/. The exact route `/credentials` and `/workflows/{id}/publish` paths are inferred from operationIds and the deprecation text, not from the path-key line."
+   },
+   {
+    "claim": "Execute Command and Local File Trigger are disabled by default in 2.x. In source, the default is `NODES_EXCLUDE = ['n8n-nodes-base.executeCommand','n8n-nodes-base.localFileTrigger']`. The 2.0 breaking-changes page says re-enable by removing them from the NODES_EXCLUDE list (`NODES_EXCLUDE=\"[]\"` enables all). Not needed here.",
+    "source_url": "https://docs.n8n.io/2-0-breaking-changes/",
+    "verified_how": "Read packages/@n8n/config/src/configs/nodes.config.ts at tag n8n@2.45.4; WebFetch of the breaking-changes page"
+   },
+   {
+    "claim": "Other 2.x defaults relevant to this stack: task runners are on by default (affects Code nodes only); N8N_BLOCK_ENV_ACCESS_IN_NODE defaults to true, so $env cannot be read in Code nodes (use credentials, not env, for the ingest token); N8N_RESTRICT_FILE_ACCESS_TO defaults to ~/.n8n-files; the legacy SQLite driver was removed (pooled driver is default); MySQL/MariaDB storage was removed; the in-memory binary data mode was removed; and `n8n --tunnel` was removed.",
+    "source_url": "https://docs.n8n.io/2-0-breaking-changes/",
+    "verified_how": "WebFetch of the breaking-changes page"
+   },
+   {
+    "claim": "SSRF guard: n8n 2.45.4 has `N8N_SSRF_PROTECTION_ENABLED`, default FALSE. The HTTP Request node can therefore reach host.lima.internal (a private IP) as-is. If protection is turned on, the default blocked list includes 10/8, 172.16/12, 192.168/16, 127/8, 169.254/16 and others, and the host must be allowed with N8N_SSRF_ALLOWED_HOSTNAMES=host.lima.internal or N8N_SSRF_ALLOWED_IP_RANGES. The docs security page does not document these variables; the source does.",
+    "source_url": "https://github.com/n8n-io/n8n/blob/n8n@2.45.4/packages/@n8n/config/src/configs/ssrf-protection.config.ts",
+    "verified_how": "Read ssrf-protection.config.ts at tag n8n@2.45.4; WebFetch of docs security env-var page (silent on these)"
+   }
+  ],
+  "deprecations_to_avoid": [
+   "Cron node (n8n-nodes-base.cron v1): hidden/legacy, still loads but not offered in the picker. Use Schedule Trigger 1.4.",
+   "`n8n update:workflow --active=true|false`: deprecated, to be removed. Use `publish:workflow --id=` and `unpublish:workflow --id=`.",
+   "`publish:workflow --all` was removed. `unpublish:workflow --all` still exists.",
+   "Public API POST /workflows/{id}/activate and /deactivate: deprecated. Use /publish and /unpublish. The `active` field on workflow objects is deprecated and read-only; check `activeVersionId` is non-null instead.",
+   "Do not expect `import:workflow --activeState=fromJson` to work in single-instance (non-queue) mode; it errors. Import, then publish:workflow.",
+   "Execute Command and Local File Trigger nodes: disabled by default via NODES_EXCLUDE. Do not use them.",
+   "Start node was removed in 2.0. Use Schedule Trigger or Manual Trigger.",
+   "Docker/npm tags `latest`/`next` were renamed `stable`/`beta`. The old names will be removed in a future major.",
+   "Do not read n8n-nodes-base `latest` tag (stale at 2.15.1); use `stable` or the version pinned by the n8n package.",
+   "Do not put the ingest token directly into the HTTP Request headerParameters; n8n's own guidance is to use a credential (genericCredentialType + httpHeaderAuth). $env access in Code nodes is blocked by default in 2.x.",
+   "Do not use `mcp`/third-party n8n workflow-template repos or AI-generated 'n8n 2.x' guides as a reference; this report is from docs.n8n.io, the n8n-io/n8n repo at tag n8n@2.45.4 and npm tarballs only."
+  ],
+  "recommended_versions": [
+   "n8n: 2.45.7 (npm/Docker `stable`; current as of 2026-11-01). Running 2.45.4 is acceptable; upgrading within 2.45.x is patch-only. Docker image n8nio/n8n:2.45.7 is multi-arch. Avoid `beta` (2.46.3).",
+   "Schedule Trigger: typeVersion 1.4",
+   "HTTP Request: typeVersion 4.5 (default in 2.45.x)",
+   "Credential types: httpHeaderAuth (or httpBearerAuth). Both are generic-auth credentials.",
+   "Workflow settings: {\"executionOrder\":\"v1\"} (plus an explicit \"timezone\" if you want the schedule pinned)"
+  ],
+  "code_snippets": [
+   "// credentials.json, an ARRAY. Plaintext `data` is encrypted on import. Header Auth sending 'Authorization: Bearer <token>'. Do not commit this file with a real token.\n// Run: n8n import:credentials --input=/tmp/credentials.json\n[\n  {\n    \"id\": \"ingestHdrAuth01\",\n    \"name\": \"specs-ingest\",\n    \"type\": \"httpHeaderAuth\",\n    \"data\": { \"name\": \"Authorization\", \"value\": \"Bearer REPLACE_ME\" }\n  }\n]\n// Bearer alternative: { \"type\": \"httpBearerAuth\", \"data\": { \"token\": \"REPLACE_ME\" } } and use genericAuthType \"httpBearerAuth\" below.",
+   "// workflow.json: single object (or array). Constructed from the verified parameter names above, but NOT executed against a live n8n 2.45.4 (no instance run). The only unconfirmed bits are the expression syntax in jsonBody and the exact URL/port. Import with: n8n import:workflow --input=/tmp/workflow.json ; then n8n publish:workflow --id=specsPushWf01\n{\n  \"id\": \"specsPushWf01\",\n  \"name\": \"specs: push snapshot\",\n  \"nodes\": [\n    {\n      \"id\": \"a1b2c3d4-0001-4000-8000-000000000001\",\n      \"name\": \"Every 5 minutes\",\n      \"type\": \"n8n-nodes-base.scheduleTrigger\",\n      \"typeVersion\": 1.4,\n      \"position\": [0, 0],\n      \"parameters\": {\n        \"rule\": { \"interval\": [ { \"field\": \"minutes\", \"minutesInterval\": 5 } ] }\n      }\n    },\n    {\n      \"id\": \"a1b2c3d4-0002-4000-8000-000000000002\",\n      \"name\": \"GET agent snapshot\",\n      \"type\": \"n8n-nodes-base.httpRequest\",\n      \"typeVersion\": 4.5,\n      \"position\": [240, 0],\n      \"retryOnFail\": true,\n      \"maxTries\": 3,\n      \"waitBetweenTries\": 2000,\n      \"onError\": \"stopWorkflow\",\n      \"parameters\": {\n        \"method\": \"GET\",\n        \"url\": \"http://host.lima.internal:PORT/snapshot\",\n        \"options\": { \"timeout\": 10000 }\n      }\n    },\n    {\n      \"id\": \"a1b2c3d4-0003-4000-8000-000000000003\",\n      \"name\": \"POST to ingest\",\n      \"type\": \"n8n-nodes-base.httpRequest\",\n      \"typeVersion\": 4.5,\n      \"position\": [480, 0],\n      \"retryOnFail\": true,\n      \"maxTries\": 3,\n      \"waitBetweenTries\": 3000,\n      \"onError\": \"stopWorkflow\",\n      \"parameters\": {\n        \"method\": \"POST\",\n        \"url\": \"https://specs.remypost.me/api/ingest\",\n        \"authentication\": \"genericCredentialType\",\n        \"genericAuthType\": \"httpHeaderAuth\",\n        \"sendBody\": true,\n        \"contentType\": \"json\",\n        \"specifyBody\": \"json\",\n        \"jsonBody\": \"={{ JSON.stringify($json) }}\",\n        \"options\": { \"timeout\": 15000 }\n      },\n      \"credentials\": {\n        \"httpHeaderAuth\": { \"id\": \"ingestHdrAuth01\", \"name\": \"specs-ingest\" }\n      }\n    }\n  ],\n  \"connections\": {\n    \"Every 5 minutes\": { \"main\": [ [ { \"node\": \"GET agent snapshot\", \"type\": \"main\", \"index\": 0 } ] ] },\n    \"GET agent snapshot\": { \"main\": [ [ { \"node\": \"POST to ingest\", \"type\": \"main\", \"index\": 0 } ] ] }\n  },\n  \"settings\": { \"executionOrder\": \"v1\", \"timezone\": \"America/Los_Angeles\" },\n  \"active\": false\n}",
+   "# Public API alternative (needs an API key created in the UI, header X-N8N-API-KEY; POST /workflows body must contain name, nodes, connections, settings; do NOT send id/active/versionId):\n# curl -X POST $N8N/api/v1/workflows -H \"X-N8N-API-KEY: $KEY\" -H 'Content-Type: application/json' -d @workflow-api.json\n# curl -X POST $N8N/api/v1/workflows/$ID/publish -H \"X-N8N-API-KEY: $KEY\" -H 'Content-Type: application/json' -d '{}'",
+   "# CLI inside the container (Colima). Run as the node user so files and the DB keep correct ownership:\n# docker exec -u node n8n n8n import:credentials --input=/tmp/credentials.json\n# docker exec -u node n8n n8n import:workflow --input=/tmp/workflow.json\n# docker exec -u node n8n n8n publish:workflow --id=specsPushWf01\n# Docs say it applies within ~15 s (publication service); the command's log says restart: `docker restart n8n` if the schedule does not fire."
+  ],
+  "open_questions": [
+   "The workflow JSON skeleton and the credentials file were NOT executed: no n8n 2.45.4 instance was run (no `docker pull`, since downloading images was not authorized). Parameter names and typeVersions were read from the 2.45.3 package source. Smoke-test import:credentials, import:workflow and publish:workflow once on the Colima instance, then export the result from the UI to compare.",
+   "Schedule cron-mode key name (`expression` under rule.interval[]) was not directly seen in the source I read; the 'every 5 minutes' minutes-interval shape is confirmed and is the one to use.",
+   "jsonBody expression form: `={{ JSON.stringify($json) }}` is the safe, commonly used pattern; `={{ $json }}` may also be serialized by n8n 4.x but was not verified. Because the POST body is the agent's JSON, confirm the agent responds with Content-Type application/json so the GET node's Autodetect response format yields $json fields (otherwise set options.response.response.responseFormat to json).",
+   "CLI docs claim publish takes effect without restart (~15 s), while the command prints 'restart n8n'. Not resolved; test.",
+   "Public API: `/credentials` and `/workflows/{id}/publish` path strings were inferred from operationIds and the deprecation description, not read from a path key. Check the in-app API playground at <n8n>/api/v1/docs, if enabled, for exact routes before scripting against it. Whether the API key setting is enabled on a fresh 2.45.4 instance was not checked.",
+   "Credential-level 'allowedHttpRequestDomains' (Allowed HTTP Request Domains) was seen on other credential types but not confirmed for httpHeaderAuth in 2.45.3; if the editor shows it, set it to specs.remypost.me so the token cannot be sent elsewhere.",
+   "Whether n8n runs in regular (non-queue) mode on Colima: assumed yes. That is why `--activeState=fromJson` is unusable and publish:workflow is required."
+  ]
+ },
+ {
+  "area": "macOS (Apple Silicon, macOS 26/27) metrics from Node via systeminformation; launchd LaunchAgents; Colima/Lima container -> Mac loopback",
+  "facts": [
+   {
+    "claim": "systeminformation latest stable on npm is 5.33.19 (published 2026-10-30). Dist-tag 'beta' is 6.0.0-beta.21 (engines node>=20); do not use beta. 5.x engines is node>=10. License MIT, no runtime deps, no install script. Unpacked size about 875 KB.",
+    "source_url": "https://www.npmjs.com/package/systeminformation",
+    "verified_how": "npm view systeminformation version dist-tags engines license time --json; npm view systeminformation@5.33.19 scripts.install dependencies"
+   },
+   {
+    "claim": "Maintainer: single npm maintainer 'plusinnovations'; repo github.com/sebhildebrandt/systeminformation (Sebastian Hildebrandt, +innovations). Genuine primary package. Weekly downloads 26,237,181 (2026-10-23..2026-10-29). Release cadence is high (5.33.14 -> 5.33.19 between 2026-09-28 and 2026-10-30).",
+    "source_url": "https://github.com/sebhildebrandt/systeminformation",
+    "verified_how": "npm view maintainers/repository.url; curl https://api.npmjs.org/downloads/point/last-week/systeminformation; WebFetch of repo README"
+   },
+   {
+    "claim": "macOS support: README lists Apple Silicon M1-M5 support. Changelog: 5.31.8 fixed cpu() efficiency-core detection for M5; 5.31.10 fixed mem() active memory on macOS; 5.33.5 osInfo() detects macOS Golden Gate (27); 5.33.11 battery()/uuid()/blockDevices() fixes for Golden Gate; 5.33.15 Mac model-name table update. No deprecations or removals listed in 5.2x-5.3x or 6.0 notes.",
+    "source_url": "https://github.com/sebhildebrandt/systeminformation/blob/master/CHANGELOG.md",
+    "verified_how": "WebFetch of CHANGELOG.md, then confirmed behaviour by running 5.33.19 on this Mac (MacBook Pro Mac17,8, M5 Pro, macOS 27.2 build 26B123, Node 26.13.0)"
+   },
+   {
+    "claim": "Tested live on this exact machine (M5 Pro, 48 GB, macOS 27.2) with systeminformation 5.33.19 (installed with --ignore-scripts in scratchpad). All of mem, currentLoad, fsSize, battery, processes, osInfo, cpu, system return real data. cpuTemperature() returns main:null, cores:[], max:null, socket:[], chipset:null (no data) without the optional package.",
+    "source_url": "https://github.com/sebhildebrandt/systeminformation",
+    "verified_how": "Ran node script calling each function; output inspected"
+   },
+   {
+    "claim": "Cost (wall time measured here, 841 processes running): mem() 16 ms; fsSize() 51 ms; battery() 27 ms; osInfo() 23 ms; cpu() 38 ms; system() 6 ms; cpuTemperature() 1 ms; memLayout() 109 ms; processes() 87 ms first call then 62-69 ms (spawns one 'ps -caxo pcpu,pmem,pid,command' plus one 'ps -axo pid,ppid,pcpu,pmem,pri,vsz,rss,nice,etime,state,tty,user,command -r'-style call per source inspection). currentLoad() first call took 502 ms (it samples CPU ticks over about 500 ms); the second call in the same process returned in 0 ms using the delta since the previous call. For a 5-min cadence all of this is negligible; the agent can be a short-lived or long-lived process either way.",
+    "source_url": "https://github.com/sebhildebrandt/systeminformation",
+    "verified_how": "process.hrtime timing around each call; grep of lib/processes.js and lib/filesystem.js for the ps and df commands"
+   },
+   {
+    "claim": "mem() on macOS returns (bytes): total, free, used, active, available, buffers(0), cached(0), slab(0), buffcache, reclaimable, swaptotal, swapused, swapfree, writeback(null), dirty(null). Observed: total 51539607552, free 71106560 (about 68 MB), used 51468500992 (= total - free, so about 100% and MISLEADING on macOS), active 35574775808, available 15964831744, buffcache 15893725184, reclaimable 18525175808, swapused 6312825978 of 7516192768. Source: active = anonymous - purgeable + wired + compressor pages (times vm.pagesize), reclaimable = inactive pages, buffcache = used - active, available = free + buffcache. Page size is 16384 on Apple Silicon (read via sysctl vm.pagesize). Use 'active' (about Activity Monitor 'Memory Used' = App + Wired + Compressed) and 'available'/'buffcache' rather than 'used'.",
+    "source_url": "https://github.com/sebhildebrandt/systeminformation",
+    "verified_how": "Ran si.mem(); read node_modules/systeminformation/lib/memory.js darwin branch (runs 'vm_stat | egrep ...' and 'sysctl -n vm.swapusage'); hand-checked: (1391625-21988+330677+475283)*16384 = 35.6 GB matches active"
+   },
+   {
+    "claim": "systeminformation does NOT expose wired, compressed, purgeable, app-memory, file-backed/cached-files or memory-pressure separately on macOS (they are computed internally then folded into active/buffcache). It also does not call memory_pressure or sysctl kern.memorystatus_*; grep of lib/*.js finds no hits. To get these, read vm_stat and sysctl yourself.",
+    "source_url": "https://github.com/sebhildebrandt/systeminformation",
+    "verified_how": "grep -n 'kern.memorystatus\\|memory_pressure' lib/*.js returned nothing; read memory.js"
+   },
+   {
+    "claim": "Native macOS memory sources, verified here: 'sysctl kern.memorystatus_level' = 73 (percent of memory free, matches 'memory_pressure' line 'System-wide memory free percentage: 73%'); 'sysctl kern.memorystatus_vm_pressure_level' = 1 (1 normal, 2 warn, 4 critical; interpretation from XNU, only the value 1 was observed); 'sysctl vm.swapusage' = 'total = 7168.00M used = 6020.38M free = 1147.62M (encrypted)'; 'vm_stat' gives page counts in 16384-byte pages: wired down, active, inactive, speculative, purgeable, File-backed pages, Anonymous pages, Pages occupied by compressor, Pages stored in compressor, Pageins/Pageouts, Swapins/Swapouts. 'memory_pressure' (no args) is read-only and prints the same plus the free percentage. Note: the 'memory_pressure -l warn|critical' form simulates pressure and must not be used.",
+    "source_url": "https://developer.apple.com/documentation/",
+    "verified_how": "Ran vm_stat, sysctl, memory_pressure on this Mac (read-only invocations); /usr/bin/memory_pressure and /usr/bin/vm_stat exist. No Apple web doc page found that documents kern.memorystatus_level; treat the sysctl names as undocumented-but-stable (man pages for vm_stat and memory_pressure exist locally)."
+   },
+   {
+    "claim": "currentLoad() on Apple Silicon works: returns avgLoad, currentLoad (total %), currentLoadUser, currentLoadSystem, currentLoadNice, currentLoadIdle, currentLoadIrq/Steal/Guest (0), raw* tick counters, and cpus[] per logical core (18 entries on M5 Pro). Per-core entries do not distinguish P vs E cores. Note avgLoad is a 1-minute load average divided by core count, not a percentage (observed 0.12).",
+    "source_url": "https://github.com/sebhildebrandt/systeminformation",
+    "verified_how": "Ran si.currentLoad() and inspected keys"
+   },
+   {
+    "claim": "cpu() works: manufacturer Apple, brand 'M5 Pro', cores 18, physicalCores 18, performanceCores 6, efficiencyCores 12, socket SOC. speed/speedMin/speedMax report 2.4 (not a real clock; Apple does not expose frequency), family is a junk number ('-143893734'), l3 null. system() works: manufacturer 'Apple Inc.', model 'Mac17,8', version 'MacBook Pro (16-inch, M5 Pro, 2026)', type Notebook, but also returns serial and uuid. osInfo() works: distro macOS, release 27.2, codename 'Golden Gate', kernel 27.2.0, arch arm64, build 26B123, plus hostname/fqdn/serial/uuid.",
+    "source_url": "https://github.com/sebhildebrandt/systeminformation",
+    "verified_how": "Ran si.cpu(), si.system(), si.osInfo()"
+   },
+   {
+    "claim": "fsSize() works but returns EVERY mounted APFS volume of the container (11 rows here: /, /System/Volumes/VM, Preboot, Update, xarts, iSCPreboot, Hardware, Data, Recovery, plus /Volumes/* disk images and external drives). On APFS all volumes in a container report the same size/available (994610155520 / 150674354176) while 'used' differs per volume; '/' is the sealed system snapshot (rw:false, used 13.8 GB). For 'disk used' on the public page use the /System/Volumes/Data row (used 807864315904, use 84.28%) or compute container size minus available; filter by mount and skip /Volumes/* (mounted DMGs, external drives).",
+    "source_url": "https://github.com/sebhildebrandt/systeminformation",
+    "verified_how": "Ran si.fsSize(); source uses 'df -kP'"
+   },
+   {
+    "claim": "battery() works on Apple Silicon: hasBattery, cycleCount 49, isCharging, designedCapacity 111578, maxCapacity 107508, currentCapacity 105687 (capacityUnit mWh), voltage 13.006 V, percent 100, acConnected true, type, model, manufacturer, serial. timeRemaining returns the sentinel 65535 when on AC/charged (ioreg TimeRemaining=65535), so treat 65535 as null. Source runs 'ioreg -n AppleSmartBattery -r | egrep ...; pmset -g batt'. serial (battery) is returned: strip it.",
+    "source_url": "https://github.com/sebhildebrandt/systeminformation",
+    "verified_how": "Ran si.battery(); ran ioreg and pmset -g batt locally"
+   },
+   {
+    "claim": "processes() works: top-level all (841), running, blocked, sleeping, unknown, list[]; each entry has pid, parentPid, name, cpu, cpuu, cpus, mem, priority, memVsz, memRss, nice, started, state, tty, user, command, params, path. memRss and memVsz are in KB (top process memRss 7153712 = about 6.8 GB, mem 14.2%). On macOS 'cpu' is ps %cpu, which Apple's ps(1) defines as a decaying average over up to a minute, not an instantaneous value, and can sum above 100%. Entries are per-process (helpers like 'Claude Helper (Renderer)' are separate rows), so group by name/bundle if you want 'top apps'. Fields path/command/params/user can leak private info: publish only an allowlisted name + rss.",
+    "source_url": "https://github.com/sebhildebrandt/systeminformation",
+    "verified_how": "Ran si.processes(), inspected keys and values; man ps (local) for %cpu definition"
+   },
+   {
+    "claim": "cpuTemperature() on Apple Silicon needs the optional npm package macos-temperature-sensor (latest 2.1.1, modified 2026-09-26; same npm maintainer plusinnovations; repo sebhildebrandt/macos-temperature-sensor; MIT; os darwin, cpu arm64; install script 'node-gyp rebuild', so it needs Xcode Command Line Tools; 1,208 downloads last week; contains lib/src/addon.c and temps.c, about 30 KB). Support was added to systeminformation in 5.28.0 and the library does require('macos-temperature-sensor') lazily. Without it you get nulls. I did NOT build or run it (native compile from a low-download package); treat the Apple Silicon temperature output as unverified here. Temperature is optional for the site; recommend skipping it.",
+    "source_url": "https://www.npmjs.com/package/macos-temperature-sensor",
+    "verified_how": "npm view macos-temperature-sensor ...; npm pack and file listing (not executed); grep of systeminformation lib/cpu.js line 1586; downloads API"
+   },
+   {
+    "claim": "Privacy: si.system(), si.osInfo(), si.battery() return serial numbers, UUIDs and hostname/fqdn (<name>.local). The agent must allowlist output fields before it exposes JSON; never pass raw si objects to the public ingest.",
+    "source_url": "https://github.com/sebhildebrandt/systeminformation",
+    "verified_how": "Observed in live output of osInfo/system/battery"
+   },
+   {
+    "claim": "Apple: cron is deprecated in favour of launchd. Exact wording on Apple's page: cron is still supported but not a recommended solution and has been deprecated in favor of launchd. Caveat: this page is in Apple's Documentation Archive (last updated 2016-09-13).",
+    "source_url": "https://developer.apple.com/library/archive/documentation/MacOSX/Conceptual/BPSystemStartup/Chapters/ScheduledJobs.html",
+    "verified_how": "WebFetch of the Apple archive page, 'Timed Jobs Using cron' section"
+   },
+   {
+    "claim": "Apple LaunchAgents doc (archive, 2016): per-user agents live in ~/Library/LaunchAgents (also /Library/LaunchAgents global, /System/Library/LaunchAgents Apple's own). Label and ProgramArguments are the required keys; KeepAlive true = always run; StandardOutPath/StandardErrorPath redirect output; per-user plist must be owned by that user and not group/world-writable. The page does not cover RunAtLoad, ProcessType, EnvironmentVariables or launchctl bootstrap; those come from launchd.plist(5) and launchctl(1).",
+    "source_url": "https://developer.apple.com/library/archive/documentation/MacOSX/Conceptual/BPSystemStartup/Chapters/CreatingLaunchdJobs.html",
+    "verified_how": "WebFetch of Apple archive page; cross-checked against local 'man launchd.plist' and 'man launchctl' on macOS 27.2"
+   },
+   {
+    "claim": "launchd.plist(5) on macOS 27.2: RunAtLoad (bool, default false; man page says it 'should be avoided' for speculative launches, but fine for an agent you want up at login; KeepAlive true also starts the job at load); KeepAlive (bool or dict of conditions, default false; dict supports SuccessfulExit, NetworkState, PathState, etc.); ProcessType values Background | Standard | Adaptive | Interactive (unset = Standard with 'light resource limits' throttling CPU and I/O; Background is the right choice for a metrics agent); EnvironmentVariables (dict of strings only, non-string values ignored); StandardOutPath / StandardErrorPath (file is created if missing); ThrottleInterval default 10 s (restart rate limit); ProgramArguments[0] should be an absolute path (relative is resolved via _PATH_STDPATH, which is minimal), so use the absolute path of node (e.g. /opt/homebrew/bin/node) and set PATH in EnvironmentVariables if needed.",
+    "source_url": "https://developer.apple.com/library/archive/documentation/MacOSX/Conceptual/BPSystemStartup/Chapters/CreatingLaunchdJobs.html",
+    "verified_how": "man launchd.plist | col -b on this Mac (macOS 27.2)"
+   },
+   {
+    "claim": "launchctl: 'load' and 'unload' are listed under LEGACY SUBCOMMANDS in launchctl(1) with 'Recommended alternative subcommands: bootstrap | bootout | enable | disable'. Modern flow for a per-user GUI agent: launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/<label>.plist; launchctl bootout gui/$(id -u)/<label> (or bootout with the plist path); launchctl kickstart -k gui/$(id -u)/<label> to restart; launchctl print gui/$(id -u)/<label> to inspect. gui/<uid> targets the GUI login domain and exists only while the user is logged in at the GUI (use user/<uid> for a domain independent of GUI login). 'bootstrap' fails if the label is already loaded, so bootout first when redeploying. Also 'disable' state persists across boots.",
+    "source_url": "https://ss64.com/mac/launchctl.html",
+    "verified_how": "man launchctl | col -b on this Mac (macOS 27.2): LEGACY SUBCOMMANDS section, gui/<uid> specifier text, kickstart -kp text. ss64 link is secondary and not relied on."
+   },
+   {
+    "claim": "Colima -> Mac loopback: VERIFIED EMPIRICALLY on this Mac (colima 0.10.3, limactl 2.2.1, vmType: vz, docker runtime). With a Node HTTP server bound ONLY to 127.0.0.1:18765 on the Mac, a default-bridge Alpine container reached it via http://host.lima.internal:18765/ (resolves to 192.168.5.2), also via host.docker.internal (same IP) and via http://192.168.5.2:18765/. The server saw the peer as 127.0.0.1. So no need to bind the agent to 0.0.0.0.",
+    "source_url": "https://lima-vm.io/docs/config/network/user/",
+    "verified_how": "Ran node http server on 127.0.0.1 and 'docker run --rm alpine:3 wget http://host.lima.internal:18765/' with DOCKER_HOST=unix://$HOME/.colima/default/docker.sock; getent hosts output shown"
+   },
+   {
+    "claim": "Lima docs (default user-mode network page): the host's loopback is reachable from the guest as host.lima.internal at 192.168.5.2, including services listening only on the host's 127.0.0.1. Direction is guest->host; the reverse (host->guest ports) is Lima port forwarding, which is separate. Lima 2.3 added networkOpts.hostLoopback: false (vz only, not user-v2) to block this; default stays reachable. Lima issue #5574 (PR #5581 merged 2026-10-16) confirms the default behaviour and the vz-only scope. Installed limactl is 2.2.1, so the option is not available locally yet. Security consequence: any container or the VM can reach every loopback-only service on the Mac (including the metrics agent), so the agent needs its own Bearer token or at least must expose only the allowlisted fields; and if hostLoopback:false is later set, host.lima.internal will be refused and the agent must bind a LAN/all-interface address.",
+    "source_url": "https://github.com/lima-vm/lima/issues/5574",
+    "verified_how": "WebFetch of lima-vm.io/docs/config/network/user/ and github.com/lima-vm/lima/issues/5574; local limactl --version = 2.2.1"
+   },
+   {
+    "claim": "Side observation outside the assigned area: npm registry shows n8n latest is 2.45.7 while the local Docker image is n8nio/n8n:2.45.4.",
+    "source_url": "https://www.npmjs.com/package/n8n",
+    "verified_how": "npm view n8n version returned 2.45.7; docker images lists n8nio/n8n:2.45.4"
+   }
+  ],
+  "code_snippets": [
+   "// recommended allowlisted snapshot (si 5.33.19)\nconst [m,l,fs,b,p]=await Promise.all([si.mem(),si.currentLoad(),si.fsSize(),si.battery(),si.processes()]);\n// RAM: use m.active (App+Wired+Compressed), m.available, m.total, m.swapused; NOT m.used (=total-free)\n// disk: fs.find(x=>x.mount==='/System/Volumes/Data')\n// battery: b.percent, b.isCharging, b.acConnected, b.cycleCount, b.maxCapacity/b.designedCapacity; timeRemaining===65535 -> null\n// procs: p.list sorted by memRss (KB), expose only name + rss, group helpers by app name",
+   "// native memory pressure (read-only, fast)\nsysctl -n kern.memorystatus_level            # percent free, e.g. 73\nsysctl -n kern.memorystatus_vm_pressure_level # 1 normal, 2 warn, 4 critical\nvm_stat                                       # 16384-byte pages: wired, compressor, purgeable, file-backed, anonymous",
+   "<!-- ~/Library/LaunchAgents/me.remypost.specs-agent.plist (keys) -->\nLabel, ProgramArguments=[/opt/homebrew/bin/node, /abs/path/agent.js], RunAtLoad=true, KeepAlive=true, ProcessType=Background, EnvironmentVariables={PORT,PATH}, StandardOutPath=/abs/path/agent.log, StandardErrorPath=/abs/path/agent.err.log  (no ~ expansion; use absolute paths)",
+   "launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/me.remypost.specs-agent.plist\nlaunchctl kickstart -k gui/$(id -u)/me.remypost.specs-agent\nlaunchctl print gui/$(id -u)/me.remypost.specs-agent\nlaunchctl bootout gui/$(id -u)/me.remypost.specs-agent",
+   "# from a Colima container (verified): agent bound to 127.0.0.1 on the Mac\ndocker run --rm alpine:3 wget -qO- http://host.lima.internal:PORT/"
+  ],
+  "deprecations_to_avoid": [
+   "launchctl load / unload: listed as LEGACY SUBCOMMANDS in launchctl(1); use bootstrap / bootout (gui/$UID domain).",
+   "cron / crontab on macOS: Apple states cron is deprecated in favour of launchd (archive doc).",
+   "systeminformation 6.0.0-beta.x (dist-tag 'beta'): pre-release, requires Node >=20; pin to 5.33.19 stable.",
+   "si.mem().used on macOS: equals total - free, so it reads about 100%; do not display it as RAM used.",
+   "si.cpuTemperature() on Apple Silicon without macos-temperature-sensor: returns nulls; si.cpu().speed on Apple Silicon is a placeholder (2.4), not a real clock.",
+   "Publishing raw si.system()/osInfo()/battery() objects: contain serial numbers, UUID, hostname.",
+   "memory_pressure -l <level>: simulates pressure on the machine; only call plain 'memory_pressure' or sysctl.",
+   "systeminformation package-name look-alikes / unofficial forks: only trust npm 'systeminformation' (maintainer plusinnovations, repo sebhildebrandt/systeminformation)."
+  ],
+  "recommended_versions": [
+   "systeminformation@5.33.19 (latest stable, 2026-10-30)",
+   "Node on the Mac: tested with v26.13.0 (si 5.x supports node >=10)",
+   "macos-temperature-sensor@2.1.1 (optional, not tested, skip unless you want temps)",
+   "Lima 2.2.1 / Colima 0.10.3 as installed (vmType vz); Lima >=2.3 only needed if you want networkOpts.hostLoopback:false",
+   "n8n: npm latest is 2.45.7 (installed image is 2.45.4); out of scope here, just noted"
+  ],
+  "open_questions": [
+   "Does n8n 2.45.x HTTP Request node (or any SSRF protection setting) block requests to host.lima.internal / private 192.168.5.2? Not tested; the raw container-to-host path is confirmed, but the n8n node itself was not exercised.",
+   "kern.memorystatus_vm_pressure_level values 2 and 4 are from XNU convention; only value 1 was observed, and I found no Apple web doc page for kern.memorystatus_level (verified only by running it and cross-checking with memory_pressure output).",
+   "macos-temperature-sensor was inspected but not built or run, so whether it yields SoC temperatures on M5 Pro / macOS 27 is unverified.",
+   "Whether the LaunchAgent should use gui/<uid> (needs a logged-in GUI session, which a laptop normally has) vs a LaunchDaemon: not decided; gui/<uid> is the standard choice for a per-user agent.",
+   "Apple's launchd docs are an archived 2016 page plus the man pages on macOS 27.2; I found no newer Apple web page for plist keys, so the man pages on the target OS are the authoritative reference."
+  ]
+ },
+ {
+  "area": "Frontend libs (Next.js App Router / React 19), Caddy 2 reverse_proxy, Tailwind opinion. Checked 2026-11-01 via npm registry, package tarballs (npm pack, nothing executed), Caddy GitHub source v2.11.7, Docker Hub API, official docs sources.",
+  "facts": [
+   {
+    "claim": "Current npm latest: recharts 3.10.1 (peers react/react-dom/react-is ^16.8||^17||^18||^19; react-is must match installed react version). 3.x is stable; 4.x does not exist; 3.11.0-canary.8 is a canary only (do not use). Recharts has no 'use client' directive anywhere in es6/lib, so every chart must live in your own 'use client' component (RSC import of recharts directly will fail on hooks/context). Recharts 3 dropped recharts-scale and react-smith deps; TooltipProps renamed TooltipContentProps for custom content; Customized no longer gets internal state; activeIndex prop removed. Install: npm i recharts react-is@19.3.1 (match React).",
+    "source_url": "https://www.npmjs.com/package/recharts",
+    "verified_how": "npm view recharts version dist-tags peerDependencies; npm pack + grep -r 'use client' (0 hits); GitHub wiki 3.0-migration-guide.md; GitHub releases/latest = v3.10.1 (2026-07-25)"
+   },
+   {
+    "claim": "zod latest = 4.6.7 (published 2026-10-12); import { z } from 'zod' is v4 (no 'zod/v4' subpath needed). Verified behaviors on 4.6.7: z.iso.datetime() rejects offsets by default ('+01:00' fails; 'Z' ok) - use z.iso.datetime({offset:true}) to accept offsets; precision option works; z.strictObject({...}) rejects unknown keys with code unrecognized_keys; z.object().strict()/.passthrough()/.strip() still exist (legacy, but present); z.string().datetime()/.email() still exist but are deprecated in favor of z.iso.datetime()/z.email(); z.int() exists and z.number().int() is safe-integer only (1e20 rejected). Error customization: use the unified { error: 'msg' } param or function; { message: 'x' } still works (deprecated); the v3 errorMap param is SILENTLY IGNORED (default message returned, no throw). Error formatting: z.prettifyError, z.flattenError, z.treeifyError exist (ZodError.format still there). z.toJSONSchema exists. Default messages changed (e.g. 'Too small: expected number to be >=0').",
+    "source_url": "https://zod.dev/v4/changelog",
+    "verified_how": "npm view zod; installed zod@4.6.7 in /private/tmp/zt with --ignore-scripts and ran a test script exercising each API"
+   },
+   {
+    "claim": "Fontsource packages all at 5.3.0 (published 2026-07-19): @fontsource-variable/archivo (CSS family 'Archivo Variable', wght 100-900; extra entry points: wdth.css, wght.css, standard.css, plus *-italic variants; index.css = wght axis), @fontsource-variable/newsreader (family 'Newsreader Variable', wght 200-800; opsz.css adds optical-size axis, wght.css, standard.css, italics), @fontsource/fragment-mono (family 'Fragment Mono', static 400 only, normal+italic; subset files like latin-400.css exist to trim unicode ranges). Use via CSS import, e.g. import '@fontsource-variable/archivo' in app/layout.tsx (or @import in globals.css); package exports map '.' to ./index.css. Self-hosted woff2 lands in .next/static/media via Next's CSS bundler - no Google Fonts request. Remember font-family names carry the ' Variable' suffix for the two variable packages. Fragment Mono has no bold: do not set font-weight>400 or the browser synthesizes faux-bold.",
+    "source_url": "https://fontsource.org/docs/getting-started/install",
+    "verified_how": "npm view <pkg> version time; npm pack and read index.css / exports map / file list"
+   },
+   {
+    "claim": "Icons: @phosphor-icons/react 2.1.10 (last published 2025-05-22, i.e. ~5 months stale but still the latest dist-tag; peers react >=16.8, so React 19 is fine). For RSC/SSR use the ssr entry: import { CpuIcon } from '@phosphor-icons/react/ssr' (README states the main entry uses React Context which Server Components can't use; ssr variants cannot inherit IconContext). Verified ssr/Cpu.es.js has no 'use client' and renders SSRBase. Use the *Icon-suffixed names (CpuIcon); un-suffixed names (Cpu) still exported in 2.1.x but suffixed is the documented form. lucide-react is now 1.66.0 (1.x line, daily releases, latest published 2026-10-31); peers react ^16.5.1..^19; it has 'use client' only inside Icon.mjs, so icons can be imported straight into Server Components (import { Cpu } from 'lucide-react'; sideEffects:false so tree-shaking works) and need no special ssr path. Both work in RSC. Recommendation: lucide-react if you want zero RSC caveats and an actively maintained package; Phosphor only if you specifically want its look, and then only via /ssr.",
+    "source_url": "https://github.com/phosphor-icons/react#react-server-components-and-ssr",
+    "verified_how": "npm view versions/time/peerDependencies/exports; npm pack both and grep 'use client'; read phosphor README lines 64-75"
+   },
+   {
+    "claim": "Caddy: latest stable release v2.11.7 (published 2026-10-03, prerelease=false). Official Docker image caddy:2.11.7 and caddy:2 exist on Docker Hub (updated 2026-10-30), multi-arch including arm64. Pin the tag (caddy:2.11 or 2.11.7) rather than :latest.",
+    "source_url": "https://github.com/caddyserver/caddy/releases/tag/v2.11.7",
+    "verified_how": "GitHub API releases/latest; Docker Hub API library/caddy/tags/2.11.7 listing architectures"
+   },
+   {
+    "claim": "Proxying to a container by name: put Caddy and the Next container on the same user-defined Docker network; Docker's embedded DNS resolves container name (and compose service name/aliases) there ('User-defined bridges provide automatic DNS resolution between containers'; the default bridge does not). Caddyfile: specs.remypost.me { request_body { max_size 64KB } reverse_proxy specs-web:3000 }. Do not publish the Next port on the host. Container name must be resolvable at request time; upstream hostname is resolved by Docker DNS when dialing, so recreating the container (new IP) is fine.",
+    "source_url": "https://docs.docker.com/engine/network/drivers/bridge/",
+    "verified_how": "Docker docs source bridge.md line 49; Caddy reverse_proxy.md upstream address section"
+   },
+   {
+    "claim": "reverse_proxy header defaults: Caddy passes all incoming headers including Host to the backend unmodified, except it sets/augments X-Forwarded-For, X-Forwarded-Proto and X-Forwarded-Host. Incoming X-Forwarded-* values from clients are IGNORED (anti-spoofing) unless the client IP is in trusted_proxies (configure via global servers > trusted_proxies, not per-proxy; only needed if a CDN/another proxy sits in front, e.g. Cloudflare). Since v2.11.0 Caddy auto-sets Host to upstream host for HTTPS upstreams (not relevant for plain http to a container). Next gets Host: specs.remypost.me and X-Forwarded-For with the real client IP; no header_up needed for the plain-HTTP container case. Defaults: dial_timeout 3s, read_timeout none, lb retries off, response partially buffered, health checks off.",
+    "source_url": "https://caddyserver.com/docs/caddyfile/directives/reverse_proxy#defaults",
+    "verified_how": "Read caddyserver/website src/docs/markdown/caddyfile/directives/reverse_proxy.md lines 502-545, 613, 621"
+   },
+   {
+    "claim": "request_body { max_size <size> } caps incoming body: accepts go-humanize sizes (e.g. 64KB, 1MB), reads beyond the limit fail with HTTP 413. In v2.11.7 source it wraps r.Body with http.MaxBytesReader and maps MaxBytesError to caddyhttp.Error(413); it does NOT pre-check Content-Length, so the 413 arises when the body is read/streamed to the upstream (client may see a reset or 413 depending on how far the proxy got). request_body is in the Caddyfile directive order before reverse_proxy, so it applies when written in the same site block (use handle/route if scoping to /api/ingest: handle /api/ingest { request_body { max_size 64KB } reverse_proxy specs-web:3000 }). Experimental set subdirective exists (v2.10.0+); read_timeout/write_timeout subdirectives were REMOVED from request_body - use the timeouts directive. Also enforce a size/zod limit in the route handler as defense in depth.",
+    "source_url": "https://caddyserver.com/docs/caddyfile/directives/request_body",
+    "verified_how": "Read request_body.md and modules/caddyhttp/requestbody/requestbody.go at tag v2.11.7; directives.go order list (request_body line 62, reverse_proxy line 95)"
+   },
+   {
+    "claim": "Tailwind: tailwindcss and @tailwindcss/postcss both 4.3.3 (2026-10-19). v4 setup for Next: npm i tailwindcss @tailwindcss/postcss postcss; postcss.config.mjs with '@tailwindcss/postcss'; globals.css '@import \"tailwindcss\";'; config is CSS-first (@theme) - no tailwind.config.js by default. Requires Chrome 111+/Safari 16.4+/Firefox 128+ (relevant to a public page). Opinion: for ONE metrics page with a bespoke typographic design (Archivo/Newsreader/Fragment Mono), plain CSS (a single globals.css with custom properties, or CSS modules) is the better fit: no PostCSS plugin/build dependency, no utility-class noise in a design that is mostly a few custom components, easier to ship tiny CSS, and Next supports CSS Modules out of the box. Tailwind pays off with many pages/components, team conventions, or rapid iteration; its v4 build is cheap, so choosing it is not wrong, just unnecessary here. If you do use it, only v4 (not v3) and keep @theme tokens for fonts/colors.",
+    "source_url": "https://tailwindcss.com/docs/compatibility",
+    "verified_how": "npm view tailwindcss/@tailwindcss/postcss; Tailwind docs source compatibility.mdx (browser versions)"
+   },
+   {
+    "claim": "Next.js latest on npm is 16.4.3 and React/React-DOM 19.3.1 (react-dom peers react ^19.3.1); next peers accept react ^19.0.0, so recharts 3.10.1 + react-is 19.3.1 is a consistent set. Note for context only: confirm your Next target (16.x vs 15.x) in the other research area.",
+    "source_url": "https://www.npmjs.com/package/next",
+    "verified_how": "npm view next/react/react-dom version peerDependencies"
+   }
+  ],
+  "deprecations_to_avoid": [
+   "zod: v3 errorMap param (silently ignored in v4); { message } param (deprecated, use { error }); z.string().datetime()/.email()/.uuid() style string-format methods (deprecated, use z.iso.datetime(), z.email(), z.uuid()); zod v3-era invalid_type_error/required_error params (replaced by error); do not use zod@next/alpha/beta/canary dist-tags (stale/odd: 'next' tag is 3.25 beta)",
+   "recharts: do not import in a Server Component (no use client); do not use 2.x patterns removed in 3.x (activeIndex prop, Customized receiving internal state, TooltipProps for custom tooltip content - use TooltipContentProps, alwaysShow on Reference*); do not use alpha/beta/canary tags; keep react-is matching React version",
+   "@phosphor-icons/react: do not import from the root entry in Server Components (uses Context); use @phosphor-icons/react/ssr and *Icon-suffixed names",
+   "lucide-react: 1.x removed the old 0.x-era assumptions; don't pin to 0.x examples or the 'next'/'dev'/'beta' dist-tags (stale); brand icons are not in lucide (not needed here)",
+   "Caddy: request_body read_timeout/write_timeout subdirectives removed (use timeouts directive); manual header_up Host {upstream_hostport} no longer needed for HTTPS upstreams since v2.11.0; do not use caddy:latest tag; don't trust X-Forwarded-* from clients unless trusted_proxies set",
+   "Tailwind v3 configs (tailwind.config.js, @tailwind base/components/utilities directives, tailwindcss PostCSS plugin directly) - v4 uses @import 'tailwindcss' and @tailwindcss/postcss; also do not combine Tailwind v4 with Sass/Less",
+   "Fontsource: do not use the old unscoped 'fontsource-*' packages; do not request weights above 400 for Fragment Mono"
+  ],
+  "recommended_versions": [
+   "recharts@3.10.1 (+ react-is@19.3.1 matching react)",
+   "zod@4.6.7",
+   "@fontsource-variable/archivo@5.3.0",
+   "@fontsource-variable/newsreader@5.3.0",
+   "@fontsource/fragment-mono@5.3.0",
+   "lucide-react@1.66.0 (preferred) or @phosphor-icons/react@2.1.10 via /ssr entry",
+   "caddy image caddy:2.11.7 (Caddy v2.11.7)",
+   "tailwindcss@4.3.3 + @tailwindcss/postcss@4.3.3 only if you opt in (opinion: plain CSS/CSS Modules is enough for one page)",
+   "next@16.4.3, react@19.3.1, react-dom@19.3.1 (npm latest at check time)"
+  ],
+  "code_snippets": [
+   "Caddyfile:\nspecs.remypost.me {\n\thandle /api/ingest {\n\t\trequest_body {\n\t\t\tmax_size 64KB\n\t\t}\n\t\treverse_proxy specs-web:3000\n\t}\n\thandle {\n\t\treverse_proxy specs-web:3000\n\t}\n}  # caddy + specs-web share one user-defined docker network; no header_up needed",
+   "zod 4 ingest schema: const Snapshot = z.strictObject({ ts: z.iso.datetime({ offset: true }), battery: z.number().min(0).max(100, { error: 'pct out of range' }).nullable(), apps: z.array(z.strictObject({ name: z.string().max(64), memBytes: z.int().nonnegative() })).max(10) }); const r = Snapshot.safeParse(body); if (!r.success) return Response.json({ error: z.flattenError(r.error) }, { status: 422 });",
+   "Chart in RSC: // components/HistoryChart.tsx\n'use client';\nimport { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip } from 'recharts';\n// ...then import <HistoryChart data={rows}/> from a Server Component page and pass plain serializable props",
+   "Icons: import { CpuIcon } from '@phosphor-icons/react/ssr'  // RSC-safe\n// or: import { Cpu } from 'lucide-react'  // RSC-safe (use client lives only in Icon.mjs)",
+   "Fonts (app/layout.tsx): import '@fontsource-variable/archivo'; import '@fontsource-variable/newsreader'; import '@fontsource/fragment-mono/400.css'; // CSS: font-family: 'Archivo Variable', system-ui, sans-serif; 'Newsreader Variable', serif; 'Fragment Mono', ui-monospace, monospace"
+  ],
+  "open_questions": [
+   "Caddy request_body max_size does not pre-check Content-Length (v2.11.7 source); client-visible result for an oversized POST (clean 413 vs connection reset) was not tested live - verify with curl against the real stack, and also cap body size inside the Next route handler.",
+   "Recharts 3.10.1 SSR output with ResponsiveContainer renders empty on server (needs measured width); for a tiny page consider fixed width/height props or initialDimension, or accept client-only render - not tested in a running Next app.",
+   "Next 16.4.3 / React 19.3.1 are npm 'latest' per registry today; whether you want to pin Next 16 vs a 15 LTS line and Next 16 specifics (Turbopack default, middleware->proxy rename) belong to the other research areas.",
+   "Phosphor has not been published since 2025-05-22; fine today but flag if long-term maintenance matters (lucide-react is the safer pick).",
+   "The Caddy docs read from caddyserver/website master may be marginally ahead of v2.11.7; code-level claims were verified against the v2.11.7 tag, doc-only claims (reverse_proxy defaults) were not diffed against that tag."
+  ]
+ }
+]

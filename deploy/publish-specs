@@ -1,0 +1,98 @@
+#!/bin/bash
+# Installed on the VM as ~/bin/publish-specs: the forced command for the GitHub Actions deploy key.
+# Reads a gzipped tarball of the repo on stdin (capped at 60 MB, 200 MB unpacked), unpacks it into a new release,
+# builds the image natively, swaps the container and waits for it to be healthy. Keeps 5 releases.
+#
+# The uploader chooses compose.yml and the Dockerfile, so whoever holds the deploy key controls what runs on this
+# VM. The caps and the member check below limit accidents and sloppy archives; they are not a sandbox.
+#
+# Build first, switch second: a failed build never touches the running container, and a container that does not
+# turn healthy is replaced by the previous image again. "current" only moves once the new release is healthy.
+set -euo pipefail
+export PATH=/usr/local/bin:/usr/bin:/bin
+
+ROOT=/home/ubuntu/specs
+ENV_FILE="$ROOT/.env"
+NAME=$(date -u +%Y%m%d-%H%M%S)
+REL="$ROOT/releases/$NAME"
+HEALTH_TIMEOUT=90
+KEEP=5
+MAX_UPLOAD=60000000
+MAX_UNPACKED=200000000
+MIN_FREE=2000000000
+
+compose() { docker compose -p specs "$@"; }
+
+[ -f "$ENV_FILE" ] || { echo "missing $ENV_FILE: run deploy/vm-setup.sh first" >&2; exit 1; }
+export SPECS_ENV_FILE="$ENV_FILE"
+
+mkdir -p "$ROOT/releases"
+exec 9>"$ROOT/.deploy.lock"
+flock -n 9 || { echo "another deploy is running" >&2; exit 1; }
+
+free=$(df --output=avail -B1 "$ROOT" | tail -n 1)
+[ "$free" -ge "$MIN_FREE" ] || { echo "less than $((MIN_FREE / 1000000)) MB free under $ROOT" >&2; exit 1; }
+
+# mkdir first: if the name is already taken, the trap below must not remove that other release.
+mkdir "$REL"
+OK=
+TARFILE=$(mktemp "$ROOT/upload.XXXXXX")
+trap '[ -n "$OK" ] || rm -rf "$REL"; rm -f "$TARFILE"' EXIT
+
+# Cap the compressed bytes and the unpacked stream (a small gzip can expand about 1000 times). The archive goes to
+# a file so it can be listed before it is extracted: only files and folders are allowed, because a symlink or hard
+# link could point the checks and the build at files outside the release.
+head -c "$MAX_UPLOAD" | gzip -dc | head -c "$MAX_UNPACKED" >"$TARFILE"
+if tar -tvf "$TARFILE" | grep -v '^[-d]' >/dev/null; then
+  echo "upload contains links or special files" >&2
+  exit 1
+fi
+tar -xf "$TARFILE" -C "$REL" --no-same-owner --no-same-permissions --no-overwrite-dir
+rm -f "$TARFILE"
+for f in package.json Dockerfile compose.yml; do
+  [ -f "$REL/$f" ] || { echo "no $f in upload" >&2; exit 1; }
+done
+cd "$REL"
+
+# What is running now, so a bad release can be undone without a rebuild.
+PREV_IMAGE=$(docker inspect -f '{{.Image}}' specs 2>/dev/null || true)
+PREV_REL=$(readlink -f "$ROOT/current" 2>/dev/null || true)
+IMAGE=$(compose -f compose.yml config --images | head -n 1)
+
+echo "building $NAME"
+compose -f compose.yml build
+
+echo "starting $NAME"
+compose -f compose.yml up -d --remove-orphans
+
+health() { docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' specs 2>/dev/null || echo missing; }
+status=starting
+for _ in $(seq 1 $((HEALTH_TIMEOUT / 2))); do
+  status=$(health)
+  case "$status" in healthy | unhealthy) break ;; esac
+  sleep 2
+done
+
+if [ "$status" != healthy ]; then
+  echo "container 'specs' is $status after up to ${HEALTH_TIMEOUT}s; last logs:" >&2
+  docker logs --tail 80 specs >&2 || true
+  if [ -n "$PREV_IMAGE" ] && [ -n "$IMAGE" ]; then
+    echo "rolling back to the previous image" >&2
+    docker tag "$PREV_IMAGE" "$IMAGE"
+    compose -f "${PREV_REL:-$REL}/compose.yml" up -d --no-build --remove-orphans >&2 || true
+  else
+    compose -f compose.yml down >&2 || true
+  fi
+  exit 1
+fi
+
+OK=1
+# Relative link so it resolves wherever the releases folder is mounted.
+ln -sfn "releases/$NAME" "$ROOT/current.tmp"
+mv -Tf "$ROOT/current.tmp" "$ROOT/current"
+
+# The newest release is the one "current" now points at, so pruning by name never removes it.
+printf '%s\n' "$ROOT"/releases/*/ | sort -r | tail -n +$((KEEP + 1)) | xargs -r rm -rf --
+docker image prune -f >/dev/null
+docker builder prune -f --filter until=72h >/dev/null || true
+echo "published $NAME"

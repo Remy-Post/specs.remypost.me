@@ -1,0 +1,15 @@
+{
+  "hw.nperflevels": "2",
+  "hw.perflevel0.name": "Super",
+  "hw.perflevel0.physicalcpu": "6",
+  "hw.perflevel1.name": "Performance",
+  "hw.perflevel1.physicalcpu": "12",
+  "hw.memsize": "51539607552",
+  "machdep.cpu.brand_string": "Apple M5 Pro",
+  "hw.model": "Mac17,8",
+  "kern.boottime": "{ sec = 1793110834, usec = 793548 } Tue Oct 27 10:20:34 2026",
+  "vm.swapusage": "total = 7168.00M  used = 5940.31M  free = 1227.69M  (encrypted)",
+  "kern.memorystatus_level": "72",
+  "kern.memorystatus_vm_pressure_level": "1",
+  "sw_vers -productVersion": "27.2"
+}
