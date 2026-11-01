@@ -42,6 +42,7 @@ backup="caddy/Caddyfile.bak-specs-$(date -u +%Y%m%d-%H%M%S)"
 cp caddy/Caddyfile "$backup"
 ls -1t caddy/Caddyfile.bak-specs-* | tail -n +4 | xargs -r rm -f
 
+# "docker compose exec" reads stdin, which is this script; </dev/null keeps it from eating the lines after it.
 # Our block runs from "# BEGIN specs" to "# END specs"; on the first run it is appended to the end of the file.
 python3 -I - caddy/Caddyfile ~/specs/specs.caddy.new <<'PY'
 import sys
@@ -60,8 +61,8 @@ else:
 open(path, "w").write(before + block + ("\n" + after if after else ""))
 PY
 
-if docker compose exec -T caddy caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile; then
-  docker compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile
+if docker compose exec -T caddy caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile </dev/null; then
+  docker compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile </dev/null
   echo "caddy reloaded (backup: ~/n8n/$backup)"
 else
   cp "$backup" caddy/Caddyfile
