@@ -24,6 +24,10 @@
   --warning: #fab219;
   --critical: #d03b3b;
 
+  /* Machine colours on the compare page and in the figures: clay for the MacBook Pro, slate for the Oracle VM. */
+  --c-mac: var(--ser-1);
+  --c-vm: var(--ser-2);
+
   --f-brand: 'Archivo Variable', 'Helvetica Neue', Arial, sans-serif;
   --f-voice: 'Newsreader Variable', 'Iowan Old Style', Georgia, serif;
   --f-mono: 'Fragment Mono', ui-monospace, Menlo, monospace;
@@ -214,6 +218,71 @@ code {
 .notice > span {
   color: var(--warning);
 }
+.intro__machine {
+  display: inline-block;
+}
+.status[data-live] .dot,
+.cmp__status[data-kind='live'] .dot {
+  animation: pulse 2.4s ease-out infinite;
+}
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--good) 55%, transparent);
+  }
+  70%,
+  100% {
+    box-shadow: 0 0 0 0.55rem transparent;
+  }
+}
+
+/* ── Masthead: the nameplate and the three-way switch. Named so a tab change leaves it where it is. ── */
+.masthead {
+  view-transition-name: site-header;
+  margin-bottom: clamp(0.5rem, 1.4vw, 1.2rem);
+}
+.masthead .intro {
+  padding-bottom: clamp(1.4rem, 3vw, 2.2rem);
+}
+.switch ul {
+  display: flex;
+  border: 1px solid var(--rule-strong);
+}
+.switch li {
+  flex: 1 1 0;
+}
+.switch li + li a {
+  border-left: 1px solid var(--rule-strong);
+}
+.switch a {
+  display: block;
+  padding: 0.7rem 0.5rem;
+  text-align: center;
+  white-space: nowrap;
+  font-family: var(--f-mono);
+  font-size: 0.82rem;
+  color: var(--stone);
+  transition: color 0.3s var(--ease), background 0.3s var(--ease);
+}
+.switch a:hover {
+  color: var(--clay);
+}
+/* The current tab is its own transition group, so on a tab change the dark block glides to the new tab. */
+.switch a[aria-current='page'] {
+  background: var(--ink);
+  color: var(--bone);
+  view-transition-name: switch-pill;
+}
+.switch :focus-visible {
+  outline-offset: -2px;
+}
+@media (min-width: 40rem) {
+  .switch ul {
+    display: inline-flex;
+  }
+  .switch a {
+    padding: 0.7rem 1.4rem;
+  }
+}
 
 /* ── Board: one column on phones, two on tablets, twelve from laptops up ── */
 .board {
@@ -286,7 +355,9 @@ code {
   .rangebar,
   .card--memory,
   .card--cpu,
-  .card--empty {
+  .card--empty,
+  .card--cmpchart,
+  .card--cmpspec {
     grid-column: span 2;
   }
 }
@@ -304,6 +375,12 @@ code {
   }
   .card--cpu {
     grid-column: span 5;
+  }
+  .card--cmpchart {
+    grid-column: span 6;
+  }
+  .card--cmpspec {
+    grid-column: span 12;
   }
   .card--procs {
     grid-column: span 7;
@@ -334,9 +411,46 @@ code {
     border-left: 1px solid var(--rule);
   }
 }
-.mem {
+.card--now {
+  --accent: var(--c-mac);
+}
+.card--now[data-machine='vm'] {
+  --accent: var(--c-vm);
+}
+/* A figure that opens: the summary is the figure as it always looked, a small chevron says it expands. */
+.fold > summary {
   display: grid;
+  align-content: start;
   gap: 0.5rem;
+  list-style: none;
+  cursor: pointer;
+}
+.fold > summary::-webkit-details-marker {
+  display: none;
+}
+.fold > summary:focus-visible {
+  outline-offset: 6px;
+}
+.chev {
+  flex: none;
+  margin-left: 0.5em;
+  opacity: 0.7;
+  transition: transform 0.35s var(--ease), color 0.3s;
+}
+.fold > summary:hover .chev {
+  color: var(--clay);
+  opacity: 1;
+}
+.fold[open] > summary .chev {
+  transform: rotate(180deg);
+}
+.fold__panel {
+  padding-top: 1.1rem;
+}
+.panel {
+  display: grid;
+  gap: 0.7rem;
+  margin: 0;
 }
 .hero {
   display: flex;
@@ -414,7 +528,7 @@ code {
   font-size: 0.8rem;
   color: var(--stone);
 }
-.split__legend li {
+.split__legend > span {
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
@@ -422,6 +536,7 @@ code {
 .split__legend b {
   font-family: var(--f-mono);
   font-weight: 400;
+  font-variant-numeric: tabular-nums;
   color: var(--ink);
 }
 .key {
@@ -436,11 +551,24 @@ code {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1.6rem 1.5rem;
+  align-items: start;
 }
-.stats dt {
+.stat,
+.stat summary {
+  display: grid;
+  align-content: start;
+  min-width: 0;
+}
+.stat__label {
+  display: inline-flex;
+  align-items: center;
   margin-bottom: 0.2rem;
 }
-.stats dd:not(.sub) {
+.stat__fig {
+  /* Flex like .hero: its items are separate boxes, so a screen reader hears "412 GB" and not "412GB". */
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
   font-family: var(--f-mono);
   font-size: clamp(1.9rem, 9cqi, 3rem);
   line-height: 1.05;
@@ -451,11 +579,20 @@ code {
   margin-left: 0.2em;
   font-size: 0.4em;
 }
+/* A unit that changes length (KB/s, MB/s) keeps its width, so the figure beside it does not jump. */
+.unit--slot {
+  display: inline-block;
+  min-inline-size: 2.4em;
+}
 .stats .sub {
+  display: block;
   margin-top: 0.3rem;
   font-size: 0.78rem;
   line-height: 1.4;
   color: var(--stone);
+}
+.stat .fold > summary {
+  gap: 0;
 }
 
 /* ── Range switch ───────────────────────────────────────────── */
@@ -578,6 +715,282 @@ code {
   height: 0.55rem;
   border-radius: 50%;
   flex: none;
+}
+
+.key--line {
+  width: 1.3rem;
+  height: 0;
+  border-radius: 0;
+  border-top: 2px solid currentColor;
+}
+.key--line[data-dash] {
+  border-top-style: dashed;
+}
+.legend__peak {
+  margin-left: auto;
+  font-family: var(--f-mono);
+  font-size: 0.72rem;
+  color: var(--stone);
+}
+
+/* ── Small charts that open under a figure ───────────────────── */
+.cores {
+  display: flex;
+  align-items: flex-start;
+  gap: clamp(2px, 0.3rem, 6px);
+}
+.cores__col {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  min-width: 0;
+  max-width: 2.2rem;
+}
+.cores__track {
+  display: flex;
+  align-items: flex-end;
+  width: 100%;
+  height: 5rem;
+  background: color-mix(in srgb, var(--ink) 7%, transparent);
+}
+.cores__track i,
+.meters__bar i,
+.used i,
+.cmp__bar i {
+  display: block;
+  background: var(--accent);
+  transition: height 0.7s var(--ease), width 0.7s var(--ease);
+}
+.cores__track i {
+  width: 100%;
+}
+.cores__col b {
+  font-family: var(--f-mono);
+  font-size: 0.66rem;
+  font-weight: 400;
+  color: var(--stone);
+}
+.meters {
+  display: grid;
+  gap: 0.6rem;
+}
+.meters li {
+  display: grid;
+  grid-template-columns: 8.5rem minmax(0, 1fr) minmax(4.5rem, auto);
+  align-items: center;
+  gap: 0.2rem 0.9rem;
+  font-size: 0.8rem;
+}
+.stat .meters li {
+  grid-template-columns: 3.6rem minmax(0, 1fr) auto;
+  gap: 0.2rem 0.7rem;
+}
+.meters__name {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--stone);
+}
+.meters__bar,
+.used {
+  display: block;
+  height: 0.5rem;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--ink) 7%, transparent);
+}
+.used {
+  height: 0.7rem;
+}
+.meters__bar i,
+.used i {
+  height: 100%;
+}
+.meters__bar i[data-tone='1'] {
+  background: var(--ser-1);
+}
+.meters__bar i[data-tone='2'] {
+  background: var(--ser-2);
+}
+.meters__bar i[data-tone='3'] {
+  background: var(--ser-3);
+}
+.meters b,
+.used__legend b {
+  font-family: var(--f-mono);
+  font-size: 0.78rem;
+  font-weight: 400;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.meters b {
+  text-align: right;
+}
+.meters + .fine,
+.panel > .fine {
+  max-width: 34rem;
+}
+.used__legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.2rem 1rem;
+  font-size: 0.78rem;
+  color: var(--stone);
+}
+.spark {
+  display: block;
+  width: 100%;
+  height: 4.5rem;
+  overflow: visible;
+}
+.spark__base {
+  stroke: var(--rule-strong);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+.spark__line,
+.spark__area {
+  vector-effect: non-scaling-stroke;
+}
+.spark__line {
+  fill: none;
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.spark__area {
+  stroke: none;
+  opacity: 0.14;
+}
+.spark__line[data-tone='2'] {
+  stroke: var(--ser-2);
+}
+.spark__line[data-tone='3'] {
+  stroke: var(--ser-3);
+}
+.spark__area[data-tone='2'] {
+  fill: var(--ser-2);
+}
+.spark__axis {
+  display: flex;
+  justify-content: space-between;
+}
+
+/* ── Compare ────────────────────────────────────────────────── */
+.cmp-pair {
+  display: grid;
+  gap: 2rem 3.5rem;
+}
+@container (min-width: 40rem) {
+  .cmp-pair {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .cmp + .cmp {
+    padding-left: 3.5rem;
+    border-left: 1px solid var(--rule);
+  }
+}
+.cmp {
+  --accent: var(--c-mac);
+  display: grid;
+  align-content: start;
+  gap: 1.4rem;
+  min-width: 0;
+}
+.cmp[data-machine='vm'] {
+  --accent: var(--c-vm);
+}
+.cmp__link {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 0.9rem;
+  border-bottom: 2px solid var(--accent);
+}
+.cmp__name {
+  display: inline-block;
+  font-size: clamp(1.5rem, 3.4cqi, 2.4rem);
+  font-stretch: 108%;
+}
+.cmp__go {
+  font-family: var(--f-mono);
+  color: var(--stone);
+  transition: transform 0.4s var(--ease), color 0.3s;
+}
+.cmp__link:hover .cmp__go {
+  color: var(--clay);
+  transform: translateX(0.3rem);
+}
+.cmp__figs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.6rem 1.5rem;
+}
+.cmp__figs dd:not(.sub):not(.cmp__bar) {
+  font-family: var(--f-mono);
+  font-size: clamp(1.8rem, 5.4cqi, 2.8rem);
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+.cmp__figs .unit {
+  margin-left: 0.2em;
+  font-size: 0.4em;
+}
+.cmp__figs dt {
+  margin-bottom: 0.2rem;
+}
+.cmp__bar {
+  height: 3px;
+  margin-top: 0.55rem;
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+}
+.cmp__bar i {
+  height: 100%;
+}
+.cmp__figs .sub {
+  margin-top: 0.3rem;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: var(--stone);
+}
+.cmp__status {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-size: clamp(1rem, 2.6cqi, 1.3rem) !important;
+  letter-spacing: -0.01em !important;
+}
+.cmp__status[data-kind='stale'] .dot {
+  background: var(--warning);
+}
+.spectable th,
+.spectable td {
+  text-align: left;
+  white-space: normal;
+  vertical-align: baseline;
+}
+.spectable td {
+  font-family: var(--f-brand);
+  font-size: 0.9rem;
+  overflow-wrap: anywhere;
+}
+.spectable tbody th {
+  width: 7rem;
+  font-family: var(--f-mono);
+  font-size: max(0.72rem, 11px);
+  font-weight: 400;
+  color: var(--stone);
+}
+.spectable thead th {
+  font-size: max(0.72rem, 11px);
+}
+.spectable th:last-child,
+.spectable td:last-child {
+  padding-right: 0.6rem;
 }
 
 /* ── Tables ─────────────────────────────────────────────────── */
@@ -729,6 +1142,90 @@ tbody tr:last-child > * {
   color: var(--stone);
 }
 
+/* ── Motion between views and inside panels ──────────────────── */
+/* Clicks during a transition go through to the page. */
+::view-transition {
+  pointer-events: none;
+}
+/* The whole page does not crossfade; only the board slides and the nameplate stays put. */
+::view-transition-old(root) {
+  display: none;
+}
+::view-transition-new(root) {
+  animation: none;
+}
+::view-transition-group(site-header) {
+  animation: none;
+  z-index: 100;
+}
+::view-transition-old(site-header) {
+  display: none;
+}
+::view-transition-new(site-header) {
+  animation: none;
+}
+/* The dark block under the current tab glides from the old tab to the new one. */
+::view-transition-group(switch-pill) {
+  z-index: 101;
+  animation-duration: 0.4s;
+  animation-timing-function: var(--ease);
+}
+::view-transition-old(.nav-forward) {
+  --o: -48px;
+  animation: 150ms ease-in both fade reverse, 350ms ease-in-out both slide reverse;
+}
+::view-transition-new(.nav-forward) {
+  --o: 48px;
+  animation: 210ms ease-out 150ms both fade, 350ms ease-in-out both slide;
+}
+::view-transition-old(.nav-back) {
+  --o: 48px;
+  animation: 150ms ease-in both fade reverse, 350ms ease-in-out both slide reverse;
+}
+::view-transition-new(.nav-back) {
+  --o: -48px;
+  animation: 210ms ease-out 150ms both fade, 350ms ease-in-out both slide;
+}
+/* A column heading on the compare page becomes the machine's name in the nameplate. */
+::view-transition-group(.morph) {
+  animation-duration: 0.45s;
+  animation-timing-function: var(--ease);
+}
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes slide {
+  from {
+    translate: var(--o) 0;
+  }
+  to {
+    translate: 0 0;
+  }
+}
+
+/* <details> opens smoothly where the browser can animate to the content's height (Chrome, Edge); elsewhere it
+   opens at once, with no broken layout. */
+details::details-content {
+  block-size: 0;
+  overflow: clip;
+}
+details[open]::details-content {
+  block-size: auto;
+}
+@supports (interpolate-size: allow-keywords) {
+  :root {
+    interpolate-size: allow-keywords;
+  }
+  details::details-content {
+    transition: block-size 0.35s var(--ease), content-visibility 0.35s allow-discrete;
+  }
+}
+
 /* ── Accessibility and output modes ─────────────────────────── */
 /* TV and wall-mounted screens: thicker focus rings for 10-foot viewing. */
 @media (min-width: 1800px) and (min-height: 900px) {
@@ -743,13 +1240,38 @@ tbody tr:last-child > * {
     animation-duration: 0.001ms !important;
     transition-duration: 0.001ms !important;
   }
+  /* A pulse that loops would flicker at that speed; stop it instead. */
+  .status[data-live] .dot,
+  .cmp__status[data-kind='live'] .dot {
+    animation: none;
+  }
+  details::details-content {
+    transition: none;
+  }
+  /* No sliding between views; the content just changes. */
+  ::view-transition-old(*),
+  ::view-transition-new(*),
+  ::view-transition-group(*) {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+  }
 }
 @media (forced-colors: active) {
   /* Background colour is dropped in forced-colors mode, so mark the selected range another way. */
-  .rangebar a[aria-current='page'] {
+  .rangebar a[aria-current='page'],
+  .switch a[aria-current='page'] {
     text-decoration: underline;
     outline: 2px solid;
     outline-offset: -4px;
+  }
+  .cores__track i,
+  .meters__bar i,
+  .used i,
+  .cmp__bar i,
+  .spark__line,
+  .spark__area,
+  .key--line {
+    forced-color-adjust: none;
   }
   .split span,
   .key,
@@ -762,6 +1284,7 @@ tbody tr:last-child > * {
 @media print {
   .skip,
   .rangebar,
+  .switch,
   .table-view summary {
     display: none;
   }

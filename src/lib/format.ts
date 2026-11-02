@@ -1,3 +1,5 @@
+import type { Range } from './machines'
+
 const TZ = 'America/Toronto'
 
 export type ByteBase = 1024 | 1000
@@ -72,14 +74,27 @@ export function easternHour(ms: number): number {
   return Number(hourOfDay.format(ms))
 }
 
+const clockSeconds = new Intl.DateTimeFormat('en-CA', {
+  timeZone: TZ,
+  hour: '2-digit',
+  minute: '2-digit',
+  second: '2-digit',
+  hourCycle: 'h23',
+})
+
+/** "14:05:32 ET": for a status line that is visibly ticking. */
+export function formatClockSeconds(ms: number): string {
+  return `${clockSeconds.format(ms)} ET`
+}
+
 /** "14:05 ET": Eastern, 24-hour. */
 export function formatClock(ms: number): string {
   return `${clock.format(ms)} ET`
 }
 
-/** Chart tick: the hour for 24h, the weekday and date for 7d. */
-export function formatTick(ms: number, range: '24h' | '7d'): string {
-  return range === '24h' ? clock.format(ms) : weekday.format(ms)
+/** Chart tick: the clock for 1h and 24h, the weekday and date for 7d and 14d. */
+export function formatTick(ms: number, range: Range): string {
+  return range === '1h' || range === '24h' ? clock.format(ms) : weekday.format(ms)
 }
 
 /** Tooltip and table label: "Sun 14:05". */
@@ -91,12 +106,30 @@ export function formatDate(ms: number): string {
   return longDate.format(ms)
 }
 
-/** "5 days", "3 h", "12 min": coarse uptime. */
-export function formatUptime(fromMs: number, nowMs: number): string {
+/** Coarse uptime in two parts, for a big figure: "5" "days", "3" "h", "12" "min". */
+export function uptimeParts(fromMs: number, nowMs: number): Parts {
   const minutes = Math.max(0, Math.floor((nowMs - fromMs) / 60000))
   const days = Math.floor(minutes / 1440)
-  if (days >= 1) return `${days} day${days === 1 ? '' : 's'}`
+  if (days >= 1) return { value: String(days), unit: days === 1 ? 'day' : 'days' }
   const hours = Math.floor(minutes / 60)
-  if (hours >= 1) return `${hours} h`
-  return `${minutes} min`
+  if (hours >= 1) return { value: String(hours), unit: 'h' }
+  return { value: String(minutes), unit: 'min' }
+}
+
+/** "5 days", "3 h", "12 min": coarse uptime. */
+export function formatUptime(fromMs: number, nowMs: number): string {
+  const { value, unit } = uptimeParts(fromMs, nowMs)
+  return `${value} ${unit}`
+}
+
+/** A transfer rate in bytes per second, split like a size: "12.3" "KB/s". Network speeds use base 1000. */
+export function rateParts(bytesPerSecond: number): Parts {
+  const { value, unit } = bytesParts(bytesPerSecond, 1000)
+  return { value, unit: unit ? `${unit}/s` : '' }
+}
+
+/** 12.3 KB/s */
+export function formatRate(bytesPerSecond: number): string {
+  const { value, unit } = rateParts(bytesPerSecond)
+  return unit ? `${value} ${unit}` : value
 }

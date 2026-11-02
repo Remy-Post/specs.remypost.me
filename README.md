@@ -4,7 +4,7 @@ Live memory, CPU, disk and battery numbers from one MacBook Pro, plus the apps u
 the Remy Post identity guidelines. Live at https://specs.remypost.me.
 
 ```
-Mac:  launchd agent (127.0.0.1:4319)  <-  n8n, every 5 min  ->  POST /api/v1/ingest
+Mac:  launchd agent (127.0.0.1:4319)  <-  n8n, every minute (5 until restart) ->  POST /api/v1/ingest
 VM:   Caddy  ->  Next.js + SQLite container                  ->  https://specs.remypost.me
 ```
 

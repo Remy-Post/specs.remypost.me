@@ -1,0 +1,11 @@
+[Unit]
+Description=Run specs-host-sample every minute
+
+[Timer]
+OnCalendar=minutely
+# The default accuracy is one minute, which lets runs drift; the app wants the names fresh.
+AccuracySec=1s
+Persistent=false
+
+[Install]
+WantedBy=timers.target

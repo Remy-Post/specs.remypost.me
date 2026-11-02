@@ -1,8 +1,32 @@
 import { formatBytes } from '@/lib/format'
-import type { Snapshot } from '@/lib/schema'
+import type { MachineId } from '@/lib/schema'
 
-export default function Processes({ processes }: { processes: Snapshot['processes'] }) {
-  const top = processes.top
+interface Item {
+  name: string
+  memory: number
+  cpu: number
+}
+
+const COPY: Record<MachineId, { column: string; head: (count: string) => string; none: string; unavailable: string }> = {
+  mac: {
+    column: 'App',
+    head: (count) =>
+      `${count} processes running. Helpers are grouped under their app; CPU is percent of one core.`,
+    none: 'No per-app numbers in the latest reading.',
+    unavailable: 'Per-app numbers are not available right now.',
+  },
+  vm: {
+    column: 'Service',
+    head: (count) =>
+      `${count} containers running. Only a few services are named; the rest are added up as other services. CPU is percent of one core.`,
+    none: 'No per-service numbers in the latest reading.',
+    unavailable: 'Per-service numbers are not available right now.',
+  },
+}
+
+/** S.4. The Mac's biggest apps, or the VM's services. A null count means the source could not be read. */
+export default function Processes({ machine, count, top }: { machine: MachineId; count: number | null; top: Item[] }) {
+  const copy = COPY[machine]
   const max = Math.max(1, ...top.map((p) => p.memory))
 
   return (
@@ -12,20 +36,17 @@ export default function Processes({ processes }: { processes: Snapshot['processe
         <h2 className="card__title" id="procs">
           Using the most memory
         </h2>
-        <p className="fine">
-          {processes.count.toLocaleString('en-CA')} processes running. Helpers are grouped under their app; CPU is
-          percent of one core.
-        </p>
+        <p className="fine">{count === null ? copy.unavailable : copy.head(count.toLocaleString('en-CA'))}</p>
       </div>
 
-      {top.length === 0 ? (
-        <p className="fine">No per-app numbers in the latest reading.</p>
+      {count === null ? null : top.length === 0 ? (
+        <p className="fine">{copy.none}</p>
       ) : (
         <div className="table-scroll">
           <table className="procs">
             <thead>
               <tr>
-                <th scope="col">App</th>
+                <th scope="col">{copy.column}</th>
                 <th scope="col">Memory</th>
                 <th scope="col">CPU</th>
               </tr>

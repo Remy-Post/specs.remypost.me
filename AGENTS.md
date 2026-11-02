@@ -7,6 +7,10 @@ Guidance for coding agents working in this repository. Read `docs/SPEC.md` (the 
 
 - `src/` Next.js 16 app (App Router, TypeScript, plain CSS). `src/lib/schema.ts` is Snapshot v1; `src/lib/store.ts`
   is the `node:sqlite` store; `src/proxy.ts` sets the per-request CSP (this is Next 16's `proxy`, not `middleware`).
+- `src/lib/vm/` the Oracle VM sampler (`sampler.ts` is the 5 s loop, `proc.ts` and `cgroup.ts` are pure parsers,
+  `names.ts` is the container-name allowlist: the privacy boundary for the VM). `src/instrumentation.ts` starts it;
+  `src/lib/bus.ts` fans readings out to `GET /api/v1/stream`. Module state is not shared between instrumentation and
+  routes, so shared state sits on `globalThis` under `Symbol.for('specs.*')`.
 - `test/` vitest. `agent/test/` is `node:test`.
 - `agent/` Mac agent, plain ESM, own `package.json`. `agent/src/sanitize.mjs` decides which process names are public.
 - `n8n/build.py` generates `n8n/workflows/*.json`; edit the script, never the JSON.
@@ -19,6 +23,7 @@ npm run check          # lint + typecheck + tests (root)
 npm run build          # production build (standalone output)
 npm --prefix agent test
 python3 n8n/build.py --check   # exits 1 if the generated workflow is stale
+node scripts/check-view-transitions.mjs [base-url]   # needs Chrome and a running build; every tab change must slide
 ```
 
 ## Rules

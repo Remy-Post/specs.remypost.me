@@ -4,7 +4,10 @@
 # It
 #   1. installs publish-specs into ~/bin and creates ~/specs/releases
 #   2. writes ~/specs/.env (INGEST_TOKEN, read from stdin) only if it does not exist yet
-#   3. swaps the "specs" block in ~/n8n/caddy/Caddyfile for deploy/specs.caddy, validates it inside the Caddy
+#   3. installs the host sampler (needs sudo, which the ubuntu user has without a password): the script to
+#      /usr/local/bin/specs-host-sample and a systemd service + timer that run it every minute and write container
+#      names to /run/specs-host for the container's read-only mount; runs it once and checks its output
+#   4. swaps the "specs" block in ~/n8n/caddy/Caddyfile for deploy/specs.caddy, validates it inside the Caddy
 #      container and reloads; a failed validation puts the previous Caddyfile back
 # It never edits ~/.ssh/authorized_keys; the line to add is printed at the end.
 # Override the SSH target with SPECS_SSH_HOST (default: the "n8n" entry in ~/.ssh/config).
@@ -32,6 +35,40 @@ else
   unset token
   echo "wrote ~/specs/.env (mode 600)"
 fi
+
+echo "== installing the host sampler (sudo)"
+"${SSH_NOSTDIN[@]}" 'sudo -n true' || { echo "sudo without a password is needed on the VM for the host sampler" >&2; exit 1; }
+"${SSH[@]}" 'mkdir -p ~/specs/host'
+for f in specs-host-sample specs-host-sample.service specs-host-sample.timer; do
+  "${SSH[@]}" "cat > ~/specs/host/$f.new && mv -f ~/specs/host/$f.new ~/specs/host/$f" < "$HERE/$f"
+done
+"${SSH[@]}" 'bash -s' <<'REMOTE'
+set -euo pipefail
+cd ~/specs/host
+# Root-owned, so the unit cannot be changed by whoever can write ~/specs.
+sudo install -o root -g root -m 755 specs-host-sample /usr/local/bin/specs-host-sample
+sudo install -o root -g root -m 644 specs-host-sample.service specs-host-sample.timer /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now specs-host-sample.timer
+# enable --now leaves an already-running timer on its old schedule.
+sudo systemctl restart specs-host-sample.timer
+sudo systemctl start specs-host-sample.service
+if python3 -I - /run/specs-host/containers.json /run/specs-host/host.json <<'PY'
+import json, sys
+c = json.load(open(sys.argv[1]))
+h = json.load(open(sys.argv[2]))
+assert isinstance(c["containers"], list) and c["at"], "containers.json has no containers list"
+assert h["os"], "host.json has no os"
+print(f"host sampler OK: {len(c['containers'])} containers, os {h['os']!r}")
+PY
+then
+  echo "timer: $(systemctl is-active specs-host-sample.timer)"
+else
+  echo "host sampler output is missing or invalid; last log lines:" >&2
+  journalctl -u specs-host-sample.service -n 20 --no-pager >&2 || true
+  exit 1
+fi
+REMOTE
 
 echo "== updating the Caddyfile"
 "${SSH[@]}" 'cat > ~/specs/specs.caddy.new' < "$HERE/specs.caddy"
@@ -86,4 +123,10 @@ Then set these repository secrets (Settings > Secrets and variables > Actions):
   DEPLOY_KEY          contents of ~/.ssh/specs_deploy (the private half)
   DEPLOY_HOST         ubuntu@40.233.100.237
   DEPLOY_KNOWN_HOSTS  output of: ssh-keyscan -t ed25519 40.233.100.237
+
+== after the first deploy that has the host mounts
+Check that the container sees the three mounts (the single-file mount of /proc/1/net/dev is the one to look at):
+  ssh n8n 'docker exec specs head -4 /host/net/dev; docker exec specs ls /host/cgroup | head -3; docker exec specs cat /host/run/host.json'
+and that the stream is live through Caddy (events arrive about every 5 seconds):
+  curl -N https://specs.remypost.me/api/v1/stream
 NEXT
