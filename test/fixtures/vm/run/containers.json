@@ -1,0 +1,29 @@
+{
+ "at": "2026-11-02T16:30:00.000Z",
+ "containers": [
+  {
+   "id": "a1a1a1a1a1a10123456789abcdef0123456789abcdef0123456789abcdef0123",
+   "name": "hub-web"
+  },
+  {
+   "id": "b2b2b2b2b2b20123456789abcdef0123456789abcdef0123456789abcdef0123",
+   "name": "specs"
+  },
+  {
+   "id": "c3c3c3c3c3c30123456789abcdef0123456789abcdef0123456789abcdef0123",
+   "name": "private-app"
+  },
+  {
+   "id": "d4d4d4d4d4d40123456789abcdef0123456789abcdef0123456789abcdef0123",
+   "name": "n8n-hub"
+  },
+  {
+   "id": "e5e5e5e5e5e50123456789abcdef0123456789abcdef0123456789abcdef0123",
+   "name": "n8n-caddy-1"
+  },
+  {
+   "id": "f6f6f6f6f6f60123456789abcdef0123456789abcdef0123456789abcdef0123",
+   "name": "n8n-cloudflared-1"
+  }
+ ]
+}

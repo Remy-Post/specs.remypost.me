@@ -4,7 +4,7 @@ How to run, update and undo specs.remypost.me. Architecture and reasons: [ADR 00
 The data contract: [SPEC.md](SPEC.md).
 
 ```
-Mac:  launchd agent (127.0.0.1:4319)  <-  n8n on Colima, every 5 min  ->  POST /api/v1/ingest
+Mac:  launchd agent (127.0.0.1:4319)  <-  n8n on Colima, every minute (5 until n8n restarts)  ->  POST /api/v1/ingest
 VM:   Caddy  ->  container "specs" (Next.js + SQLite volume)           ->  https://specs.remypost.me
 ```
 
@@ -18,6 +18,7 @@ VM:   Caddy  ->  container "specs" (Next.js + SQLite volume)           ->  https
 | VM | Deploy script (forced command) | `~/bin/publish-specs` |
 | VM | Caddy block | between `# BEGIN specs` and `# END specs` in `~/n8n/caddy/Caddyfile` |
 | VM | Container, data volume | `specs`, `specs_data` |
+| VM | Host sampler (container names, OS name) | `/usr/local/bin/specs-host-sample`, `specs-host-sample.{service,timer}`, output in `/run/specs-host/` |
 
 ## First-time setup, in order
 
@@ -43,6 +44,29 @@ VM:   Caddy  ->  container "specs" (Next.js + SQLite volume)           ->  https
 4. **DNS** (see [DNS record](#dns-record)); the fallback name `https://specs.remy-post.duckdns.org` works without it.
 5. **First deploy:** push to `main`, or `gh workflow run deploy.yml`.
 6. **Agent** and **n8n workflow:** next two sections.
+
+## The VM sampler (host timer and mounts)
+
+The VM view is read by the app itself every 5 seconds ([ADR 0002](adr/0002-two-machines-live.md)). `vm-setup.sh` installs
+the one host-side piece with `sudo`: a systemd timer that runs `specs-host-sample` every minute and writes
+`/run/specs-host/containers.json` (container ids and names) and `host.json` (OS name). The container mounts that folder,
+`/sys/fs/cgroup/system.slice` (the containers' cgroups, and with them the host's service unit names and PIDs) and
+`/proc/1/net/dev`, all read-only. Run `vm-setup.sh` before the first deploy that has the
+mounts, and again whenever `deploy/specs-host-sample*` changes.
+
+```bash
+ssh n8n 'systemctl list-timers specs-host-sample.timer --no-pager; cat /run/specs-host/host.json'
+ssh n8n 'docker exec specs head -4 /host/net/dev'      # the single-file mount: should list enp0s6
+curl -N https://specs.remypost.me/api/v1/stream         # an event about every 5 s, through Caddy
+```
+
+- If `/host/net/dev` is empty or the container will not start because of that mount, the VM page still works: the
+  network figure is simply missing. Do not mount all of `/proc` instead (it would expose the other containers' secrets).
+- Only the names in `src/lib/vm/names.ts` are published; every other container is "Other services". If
+  `containers.json` is more than 3 minutes old, all of them are.
+- Local runs: `SPECS_VM_SAMPLER=off` turns it off, `SPECS_HOST_PROC`, `SPECS_HOST_CGROUP`, `SPECS_HOST_NETDEV`,
+  `SPECS_HOST_RUN` and `SPECS_HOST_DISK` point it at fixture folders (see `.env.example`).
+- The sampler writes one row a minute for 14 days. The VM has no history from before the first deploy of this change.
 
 ## Install the Mac agent
 
@@ -81,7 +105,7 @@ publishes it, restarts n8n and prints the workflow and credential rows. The toke
 - `STAGE=1 n8n/deploy.sh` writes the change without restarting n8n; it takes effect at n8n's next restart. Use it when
   a restart would interrupt something else.
 - Only failed runs are stored. A healthy workflow shows no executions; look at the Executions list for failures.
-- If the agent or the site is down, each 5-minute run fails quietly (no error workflow, so no emails); the page shows
+- If the agent or the site is down, each scheduled run (every minute, or every 5 until n8n restarts) fails quietly (no error workflow, so no emails); the page shows
   how old its last reading is. To pause, open the workflow in the n8n editor and choose Unpublish; run `n8n/deploy.sh`
   to publish it again.
 

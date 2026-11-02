@@ -1,0 +1,13 @@
+[Unit]
+Description=Write container names and OS name for specs.remypost.me
+
+[Service]
+Type=oneshot
+User=ubuntu
+# /run/specs-host is created and kept (tmpfs, no disk wear) for the container's read-only mount.
+RuntimeDirectory=specs-host
+RuntimeDirectoryMode=0755
+RuntimeDirectoryPreserve=yes
+Nice=10
+TimeoutStartSec=20s
+ExecStart=/usr/local/bin/specs-host-sample

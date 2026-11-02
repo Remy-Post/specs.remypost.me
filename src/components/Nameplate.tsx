@@ -1,28 +1,27 @@
-import { formatClock, relativeTime } from '@/lib/format'
-import type { Latest } from '@/lib/store'
+import { ViewTransition } from 'react'
+import { MACHINE_NAMES } from '@/lib/machines'
+import type { MachineId } from '@/lib/schema'
 
-// The agent reports every five minutes; three missed readings means the Mac is not reporting.
-export const STALE_MS = 15 * 60 * 1000
-
-export default function Nameplate({ latest, now }: { latest: Latest | null; now: number }) {
-  const at = latest ? Date.parse(latest.snapshot.at) : null
-  const stale = at !== null && now - at > STALE_MS
-
+/**
+ * The page heading. On a machine page the label carries the machine's name under a shared transition name, so on
+ * the way from Compare the column heading morphs into it.
+ */
+export default function Nameplate({ machine, children }: { machine?: MachineId; children?: React.ReactNode }) {
   return (
     <header className="intro">
-      <p className="label">Appendix S</p>
+      <p className="label">
+        Appendix S ·{' '}
+        {machine ? (
+          <ViewTransition name={`machine-${machine}`} share="morph" default="none">
+            <span className="intro__machine">{MACHINE_NAMES[machine]}</span>
+          </ViewTransition>
+        ) : (
+          'Compare'
+        )}
+      </p>
       <h1>Specs</h1>
-      <p className="voice intro__sub">What Remy&rsquo;s MacBook Pro is doing, every five minutes.</p>
-      {at === null ? null : stale ? (
-        <p className="notice" role="status">
-          <span aria-hidden="true">▲</span> The Mac is asleep or offline. Last reading {relativeTime(at, now)}.
-        </p>
-      ) : (
-        <p className="status">
-          <span className="dot" aria-hidden="true" />
-          Updated {relativeTime(at, now)} · {formatClock(at)}
-        </p>
-      )}
+      <p className="voice intro__sub">What Remy&rsquo;s machines are doing, live.</p>
+      {children}
     </header>
   )
 }

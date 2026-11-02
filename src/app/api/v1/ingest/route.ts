@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server'
 import { bearerMatches, tokenConfigured } from '@/lib/auth'
+import { bus } from '@/lib/bus'
 import { BodyTooLarge, json, readCapped } from '@/lib/http'
 import { issuePaths, snapshotSchema } from '@/lib/schema'
 import { insertSnapshot } from '@/lib/store'
@@ -36,6 +37,9 @@ export async function POST(request: NextRequest) {
   if (at.getTime() > received.getTime() + FUTURE_SKEW_MS) return json({ error: 'reading is from the future' }, 409)
 
   // Canonical form, so "…:00Z" and "…:00.000Z" count as the same reading.
-  const stored = insertSnapshot({ ...parsed.data, at: at.toISOString() }, received)
+  const snapshot = { ...parsed.data, at: at.toISOString() }
+  const stored = insertSnapshot(snapshot, received)
+  // Open pages see the reading within a second; a duplicate is not news.
+  if (stored) bus.publish({ machine: 'mac', reading: snapshot })
   return json({ ok: true, stored })
 }

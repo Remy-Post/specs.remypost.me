@@ -3,12 +3,13 @@ import { connection } from 'next/server'
 import '@fontsource-variable/archivo/wdth.css'
 import '@fontsource-variable/newsreader/wght-italic.css'
 import '@fontsource/fragment-mono/400.css'
+import LiveProvider from '@/components/LiveProvider'
 import './globals.css'
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://specs.remypost.me'),
   title: 'Specs · Remy Post',
-  description: 'Memory, CPU, disk and battery from one MacBook Pro, refreshed every five minutes.',
+  description: 'Memory, CPU, disk and network from Remy’s MacBook Pro and Oracle cloud server, live.',
   robots: { index: false, follow: false },
 }
 
@@ -25,7 +26,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   await connection()
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <LiveProvider>{children}</LiveProvider>
+      </body>
     </html>
   )
 }

@@ -1,10 +1,13 @@
 import { connection, type NextRequest } from 'next/server'
-import { publicJson } from '@/lib/http'
-import { parseRange } from '@/lib/schema'
-import { history } from '@/lib/store'
+import { json, publicJson } from '@/lib/http'
+import { parseMachine, parseRange } from '@/lib/machines'
+import { cachedHistory } from '@/lib/store'
 
 export async function GET(request: NextRequest) {
   await connection()
-  const range = parseRange(request.nextUrl.searchParams.get('range'))
-  return publicJson(history(range))
+  const params = request.nextUrl.searchParams
+  const asked = params.get('machine')
+  const machine = asked === null ? 'mac' : parseMachine(asked)
+  if (!machine) return json({ error: 'unknown machine' }, 400, { 'Access-Control-Allow-Origin': '*' })
+  return publicJson(cachedHistory(machine, parseRange(params.get('range'))))
 }

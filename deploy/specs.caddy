@@ -2,7 +2,6 @@
 # specs.remypost.me: Next.js app in the "specs" container on the Docker network Caddy shares (n8n_default).
 # The page sets its own Content-Security-Policy (per-request nonce), so none is added here.
 (specs) {
-	encode zstd gzip
 	request_body {
 		max_size 64KB
 	}
@@ -15,7 +14,19 @@
 		X-Robots-Tag "noindex, nofollow, noarchive"
 		-Server
 	}
-	reverse_proxy specs:3000
+
+	# The event stream must not be compressed: Caddy's encode would buffer or compress it (2.11.6+ compresses SSE,
+	# and the response's "no-transform" is not honoured by released versions). handle blocks are exclusive, so only
+	# this path skips encode. No flush_interval: SSE is flushed at once, and -1 would stop Caddy cancelling the
+	# upstream request when the client leaves, which the app relies on to clean up.
+	@sse path /api/v1/stream
+	handle @sse {
+		reverse_proxy specs:3000
+	}
+	handle {
+		encode zstd gzip
+		reverse_proxy specs:3000
+	}
 }
 
 specs.remypost.me {

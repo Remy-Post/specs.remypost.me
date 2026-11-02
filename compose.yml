@@ -16,6 +16,15 @@ services:
       - caddy
     volumes:
       - specs_data:/data
+      # The VM sampler's three read-only windows onto the host, and nothing else: no Docker socket, no whole /proc
+      # (the other node containers share uid 1000, so it would expose their environ). The sources can be pointed
+      # elsewhere with the SPECS_*_SRC variables; the app reads the /host/* side (SPECS_HOST_* in src/lib/vm).
+      #   the containers' cgroups (memory, CPU), the host NIC counters, and names written by the host timer.
+      #   Only the whole system.slice subtree can be bound, so the cgroup window also lists the host's service unit
+      #   names and their PIDs (read-only, and nothing is published from them but the allowlisted containers).
+      - ${SPECS_CGROUP_SRC:-/sys/fs/cgroup/system.slice}:/host/cgroup:ro
+      - ${SPECS_NETDEV_SRC:-/proc/1/net/dev}:/host/net/dev:ro
+      - ${SPECS_RUN_SRC:-/run/specs-host}:/host/run:ro
     read_only: true
     tmpfs:
       - /tmp:size=64m,noexec,nosuid

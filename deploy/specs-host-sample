@@ -1,0 +1,51 @@
+#!/bin/bash
+# Installed on the VM as /usr/local/bin/specs-host-sample and run once a minute by specs-host-sample.timer.
+# Writes two small files into /run/specs-host/, which the specs container mounts read-only at /host/run:
+#   containers.json  {"at": ISO time, "containers": [{"id": "<64 hex>", "name": "<docker name>"}]}
+#   host.json        {"os": PRETTY_NAME from os-release}
+# The container cannot ask Docker for names (no socket, by design), and cgroups only carry the id. The app shows
+# only allowlisted names (src/lib/vm/names.ts); this file may hold every name.
+# Each file is written to a temporary name and renamed, so a reader never sees half a file.
+set -euo pipefail
+export PATH=/usr/local/bin:/usr/bin:/bin
+
+# The SPECS_* variables let a test point this at another folder and a stand-in for docker.
+OUT="${SPECS_HOST_OUT:-/run/specs-host}"
+OS_RELEASE="${SPECS_OS_RELEASE:-/etc/os-release}"
+DOCKER="${SPECS_DOCKER:-docker}"
+mkdir -p "$OUT"
+cd "$OUT"
+
+umask 022
+tmp_containers=$(mktemp "$OUT/.containers.XXXXXX")
+tmp_host=$(mktemp "$OUT/.host.XXXXXX")
+trap 'rm -f "$tmp_containers" "$tmp_host"' EXIT
+
+# Listed first: if docker fails the script stops here and the old file ages out (the app distrusts it after 3 minutes).
+list=$("$DOCKER" ps --no-trunc --format '{{.ID}} {{.Names}}')
+
+# Docker names are letters, digits and . _ - (its own rule), so a plain printf is a safe JSON writer;
+# anything else is skipped rather than escaped.
+{
+  printf '{"at":"%s","containers":[' "$(date -u +%Y-%m-%dT%H:%M:%S.000Z)"
+  first=1
+  while read -r id name; do
+    [[ "$id" =~ ^[0-9a-f]{64}$ && "$name" =~ ^[A-Za-z0-9][A-Za-z0-9_.-]*$ ]] || continue
+    [ "$first" = 1 ] || printf ','
+    first=0
+    printf '{"id":"%s","name":"%s"}' "$id" "$name"
+  done <<<"$list"
+  printf ']}\n'
+} >"$tmp_containers"
+
+# PRETTY_NAME holds letters, digits, spaces and dots in practice; keep only those so the JSON stays valid.
+os=Linux
+if [ -r "$OS_RELEASE" ]; then
+  pretty=$(sed -n 's/^PRETTY_NAME=//p' "$OS_RELEASE" | head -n 1 | tr -d '"' | tr -cd 'A-Za-z0-9 .,()+-')
+  [ -z "$pretty" ] || os=$pretty
+fi
+printf '{"os":"%s"}\n' "$os" >"$tmp_host"
+
+chmod 644 "$tmp_containers" "$tmp_host"
+mv -f "$tmp_containers" containers.json
+mv -f "$tmp_host" host.json
