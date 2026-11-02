@@ -9,6 +9,10 @@ export default function Footer() {
         <span>© Remy Post</span>
       </a>
       <span>
+        Next door: <a className="ul" href="https://tokens.remypost.me">tokens</a> ·{' '}
+        <a className="ul" href="https://aa.remypost.me">aa</a>
+      </span>
+      <span>
         <a className="ul" href="https://remypost.me">remypost.me</a> ·{' '}
         <a className="ul" href="https://github.com/Remy-Post/specs.remypost.me">GitHub</a>
       </span>
